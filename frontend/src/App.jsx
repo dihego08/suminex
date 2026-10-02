@@ -6,6 +6,7 @@ import Clientes from './pages/Clientes';
 import Cotizaciones from './pages/Cotizaciones';
 import NuevaCotizacion from './pages/NuevaCotizacion';
 import CotizacionPrint from './pages/CotizacionPrint';
+import OrdenesPedido from './pages/OrdenesPedido';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/cotizaciones" element={<Cotizaciones />} />
           <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
           <Route path="/cotizaciones/:id/imprimir" element={<CotizacionPrint />} />
+          <Route path="/ordenes" element={<OrdenesPedido />} />
           {/* Aquí añadiremos Cotizaciones, Órdenes, Ventas, etc. */}
         </Routes>
       </Layout>

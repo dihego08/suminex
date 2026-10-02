@@ -38,4 +38,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('cotizaciones/{id}', 'CotizacionController@show');
     $router->post('cotizaciones', 'CotizacionController@store');
 
+    // Rutas para Órdenes de Pedido
+    $router->get('ordenes', 'OrdenPedidoController@index');
+    $router->post('ordenes', 'OrdenPedidoController@store');
+
 });

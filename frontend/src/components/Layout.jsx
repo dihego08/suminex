@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, Users, ShoppingCart, FileText, LayoutDashboard, Truck } from 'lucide-react';
+import { Package, Users, ShoppingCart, FileText, LayoutDashboard, Truck, ClipboardList } from 'lucide-react';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -10,6 +10,7 @@ const Layout = ({ children }) => {
     { path: '/productos', icon: <Package size={20} />, label: 'Productos' },
     { path: '/clientes', icon: <Users size={20} />, label: 'Clientes' },
     { path: '/cotizaciones', icon: <FileText size={20} />, label: 'Cotizaciones' },
+    { path: '/ordenes', icon: <ClipboardList size={20} />, label: 'Órdenes de Pedido' },
     { path: '/ventas', icon: <ShoppingCart size={20} />, label: 'Ventas' },
     { path: '/guias', icon: <Truck size={20} />, label: 'Guías de Remisión' },
   ];

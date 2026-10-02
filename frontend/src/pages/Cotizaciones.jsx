@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, FileText, Printer } from 'lucide-react';
+import { Plus, Search, FileText, Printer, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost:8080/suminex/backend/public/api';
@@ -22,6 +22,18 @@ const Cotizaciones = () => {
     } catch (error) {
       console.error('Error fetching cotizaciones:', error);
       setLoading(false);
+    }
+  };
+
+  const generarOrden = async (id_cotizacion) => {
+    if(!window.confirm("¿Estás seguro de aprobar esta cotización y generar una Orden de Pedido?")) return;
+    
+    try {
+      await axios.post(`${API_URL}/ordenes`, { id_cotizacion });
+      alert("Orden de pedido generada exitosamente.");
+      fetchCotizaciones(); // Recargar para actualizar el estado
+    } catch (error) {
+      alert("Error al generar la orden: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -88,6 +100,11 @@ const Cotizaciones = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center gap-3">
+                          {cot.estado === 'Pendiente' && (
+                            <button onClick={() => generarOrden(cot.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Aprobar y Generar Orden">
+                              <CheckCircle size={18} />
+                            </button>
+                          )}
                           <Link to={`/cotizaciones/${cot.id}/imprimir`} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Ver / Imprimir">
                             <Printer size={18} />
                           </Link>
