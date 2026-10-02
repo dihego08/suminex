@@ -26,6 +26,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('productos/{id}', 'ProductoController@update');
     $router->delete('productos/{id}', 'ProductoController@destroy');
 
+    // Rutas para Códigos SUNAT
+    $router->get('codigos-sunat', 'CodigoSunatController@index');
+
     // Rutas para Clientes
     $router->get('clientes', 'ClienteController@index');
     $router->get('clientes/{id}', 'ClienteController@show');

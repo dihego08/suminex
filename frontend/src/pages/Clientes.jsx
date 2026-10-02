@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Search, User } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, User, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:8080/suminex/backend/public/api';
 
@@ -8,6 +8,10 @@ const Clientes = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Estados para el Modal
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ ruc: '', razon_social: '', direccion: '', telefono: '', email: '' });
 
   useEffect(() => {
     fetchClientes();
@@ -21,6 +25,18 @@ const Clientes = () => {
     } catch (error) {
       console.error('Error fetching clientes:', error);
       setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/clientes`, formData);
+      setShowModal(false);
+      setFormData({ ruc: '', razon_social: '', direccion: '', telefono: '', email: '' });
+      fetchClientes(); // Recargar la lista
+    } catch (error) {
+      alert("Error al crear el cliente: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -40,10 +56,13 @@ const Clientes = () => {
             placeholder="Buscar por RUC o Razón Social..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
         </div>
-        <button className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-brand-500/30">
+        <button 
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/30"
+        >
           <Plus size={20} />
           Nuevo Cliente
         </button>
@@ -79,7 +98,7 @@ const Clientes = () => {
                       <td className="p-4 font-medium text-gray-900">{cliente.ruc}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                             <User size={16} />
                           </div>
                           <span className="font-medium text-gray-800">{cliente.razon_social}</span>
@@ -115,6 +134,55 @@ const Clientes = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Nuevo Cliente */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-lg font-bold text-gray-800">Registrar Nuevo Cliente</h3>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreate} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">RUC *</label>
+                  <input type="text" required value={formData.ruc} onChange={(e) => setFormData({...formData, ruc: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
+                  <input type="text" required value={formData.razon_social} onChange={(e) => setFormData({...formData, razon_social: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                  <input type="text" value={formData.direccion} onChange={(e) => setFormData({...formData, direccion: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="text" value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30">
+                  Guardar Cliente
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

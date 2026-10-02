@@ -11,6 +11,7 @@ class Producto extends Model
     protected $fillable = [
         'codigo',
         'descripcion',
+        'marca',
         'precio_base',
         'stock',
         'unidad_medida',
@@ -20,5 +21,10 @@ class Producto extends Model
     public function preciosClientes()
     {
         return $this->hasMany(PrecioCliente::class, 'id_producto');
+    }
+
+    public function unidadesSecundarias()
+    {
+        return $this->hasMany(ProductoUnidad::class, 'id_producto');
     }
 }
