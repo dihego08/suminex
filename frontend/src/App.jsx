@@ -2,6 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Layout from './components/Layout';
 import Productos from './pages/Productos';
+import Clientes from './pages/Clientes';
+import Cotizaciones from './pages/Cotizaciones';
+import NuevaCotizacion from './pages/NuevaCotizacion';
+import CotizacionPrint from './pages/CotizacionPrint';
 
 function App() {
   return (
@@ -10,7 +14,10 @@ function App() {
         <Routes>
           <Route path="/" element={<h1 className="text-2xl font-bold text-gray-800">Dashboard Principal</h1>} />
           <Route path="/productos" element={<Productos />} />
-          <Route path="/clientes" element={<h1 className="text-2xl font-bold text-gray-800">Maestro de Clientes</h1>} />
+          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/cotizaciones" element={<Cotizaciones />} />
+          <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
+          <Route path="/cotizaciones/:id/imprimir" element={<CotizacionPrint />} />
           {/* Aquí añadiremos Cotizaciones, Órdenes, Ventas, etc. */}
         </Routes>
       </Layout>

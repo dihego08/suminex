@@ -33,4 +33,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('clientes/{id}', 'ClienteController@update');
     $router->delete('clientes/{id}', 'ClienteController@destroy');
 
+    // Rutas para Cotizaciones
+    $router->get('cotizaciones', 'CotizacionController@index');
+    $router->get('cotizaciones/{id}', 'CotizacionController@show');
+    $router->post('cotizaciones', 'CotizacionController@store');
+
 });
