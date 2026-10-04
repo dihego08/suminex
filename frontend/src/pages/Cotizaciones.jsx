@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, FileText, Printer, CheckCircle } from 'lucide-react';
+import { Plus, Search, FileText, Printer, CheckCircle, Edit, Trash2, Download, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const API_URL = 'http://localhost:8080/suminex/backend/public/api';
+import { API_URL } from '../config';
 
 const Cotizaciones = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -26,8 +26,8 @@ const Cotizaciones = () => {
   };
 
   const generarOrden = async (id_cotizacion) => {
-    if(!window.confirm("¿Estás seguro de aprobar esta cotización y generar una Orden de Pedido?")) return;
-    
+    if (!window.confirm("¿Estás seguro de aprobar esta cotización y generar una Orden de Pedido?")) return;
+
     try {
       await axios.post(`${API_URL}/ordenes`, { id_cotizacion });
       alert("Orden de pedido generada exitosamente.");
@@ -37,8 +37,18 @@ const Cotizaciones = () => {
     }
   };
 
-  const filtered = cotizaciones.filter(c => 
-    c.numero.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const eliminarCotizacion = async (id) => {
+    if (!window.confirm("¿Estás seguro de eliminar esta cotización? Esta acción no se puede deshacer.")) return;
+    try {
+      await axios.delete(`${API_URL}/cotizaciones/${id}`);
+      fetchCotizaciones();
+    } catch (error) {
+      alert("Error al eliminar la cotización");
+    }
+  };
+
+  const filtered = cotizaciones.filter(c =>
+    c.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.cliente && c.cliente.razon_social.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -69,6 +79,7 @@ const Cotizaciones = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-sm uppercase tracking-wider">
+                  <th className="p-4 font-semibold w-16 text-center">Img</th>
                   <th className="p-4 font-semibold">Número</th>
                   <th className="p-4 font-semibold">Fecha</th>
                   <th className="p-4 font-semibold">Cliente</th>
@@ -80,38 +91,57 @@ const Cotizaciones = () => {
               <tbody className="divide-y divide-gray-100">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-gray-500">No hay cotizaciones registradas</td>
+                    <td colSpan="7" className="p-8 text-center text-gray-500">No hay cotizaciones registradas</td>
                   </tr>
                 ) : (
-                  filtered.map((cot) => (
-                    <tr key={cot.id} className="hover:bg-gray-50/50 transition-colors">
+                  filtered.map((cot) => {
+                    const primerDetalle = cot.detalles && cot.detalles.length > 0 ? cot.detalles[0] : null;
+                    const primerImagen = primerDetalle?.producto?.imagen;
+
+                    return (
+                    <tr key={cot.id} className={`transition-colors ${cot.estado === 'Aprobada' ? 'bg-green-50/50 hover:bg-green-50' : 'hover:bg-gray-50/50'}`}>
+                      <td className="p-4 text-center">
+                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 mx-auto shadow-sm">
+                          {primerImagen ? (
+                            <img src={primerImagen} alt="Primer producto" className="w-full h-full object-cover" />
+                          ) : (
+                            <ImageIcon size={16} className="text-gray-300" />
+                          )}
+                        </div>
+                      </td>
                       <td className="p-4 font-medium text-gray-900">{cot.numero}</td>
                       <td className="p-4 text-gray-600">{cot.fecha}</td>
                       <td className="p-4 text-gray-800">{cot.cliente ? cot.cliente.razon_social : 'Cliente no encontrado'}</td>
                       <td className="p-4 font-semibold text-gray-900">S/ {cot.total}</td>
                       <td className="p-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          cot.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
-                          cot.estado === 'Rechazada' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cot.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
+                            cot.estado === 'Rechazada' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                          }`}>
                           {cot.estado}
                         </span>
                       </td>
                       <td className="p-4">
-                        <div className="flex justify-center gap-3">
+                        <div className="flex justify-center gap-2">
+                          <Link to={`/cotizaciones/editar/${cot.id}`} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Cotización">
+                            <Edit size={18} />
+                          </Link>
                           {cot.estado === 'Pendiente' && (
-                            <button onClick={() => generarOrden(cot.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Aprobar y Generar Orden">
+                            <button onClick={() => generarOrden(cot.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Mandar a Orden de Pedido">
                               <CheckCircle size={18} />
                             </button>
                           )}
-                          <Link to={`/cotizaciones/${cot.id}/imprimir`} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Ver / Imprimir">
-                            <Printer size={18} />
+                          <Link to={`/cotizaciones/${cot.id}/imprimir`} className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors" title="Descargar / Imprimir">
+                            <Download size={18} />
                           </Link>
+                          <button onClick={() => eliminarCotizacion(cot.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Eliminar Cotización">
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

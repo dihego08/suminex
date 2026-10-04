@@ -16,7 +16,8 @@ class Cotizacion extends Model
         'base_imponible',
         'igv',
         'total',
-        'estado'
+        'estado',
+        'terminos_condiciones'
     ];
 
     public function cliente()

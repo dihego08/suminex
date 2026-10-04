@@ -29,12 +29,33 @@ class ProductoController extends Controller
             'precio_base' => 'required|numeric',
         ]);
 
+        $data = $request->except('unidades_secundarias');
+
+        if ($request->hasFile('imagen')) {
+            $file = $request->file('imagen');
+            $filename = time() . '_img_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $file->move(base_path('public/uploads/productos'), $filename);
+            $data['imagen'] = 'uploads/productos/' . $filename;
+        }
+
+        if ($request->hasFile('ficha_tecnica')) {
+            $file = $request->file('ficha_tecnica');
+            $filename = time() . '_ficha_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $file->move(base_path('public/uploads/fichas'), $filename);
+            $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
+        }
+
         DB::beginTransaction();
         try {
-            $producto = Producto::create($request->all());
+            $producto = Producto::create($data);
 
-            if ($request->has('unidades_secundarias') && is_array($request->unidades_secundarias)) {
-                foreach ($request->unidades_secundarias as $unidad) {
+            $unidades = $request->input('unidades_secundarias');
+            if (is_string($unidades)) {
+                $unidades = json_decode($unidades, true);
+            }
+
+            if (!empty($unidades) && is_array($unidades)) {
+                foreach ($unidades as $unidad) {
                     ProductoUnidad::create([
                         'id_producto' => $producto->id,
                         'unidad_medida' => $unidad['unidad_medida'],
@@ -55,7 +76,23 @@ class ProductoController extends Controller
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
-        $producto->update($request->all());
+        $data = $request->except('unidades_secundarias');
+
+        if ($request->hasFile('imagen')) {
+            $file = $request->file('imagen');
+            $filename = time() . '_img_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $file->move(base_path('public/uploads/productos'), $filename);
+            $data['imagen'] = 'uploads/productos/' . $filename;
+        }
+
+        if ($request->hasFile('ficha_tecnica')) {
+            $file = $request->file('ficha_tecnica');
+            $filename = time() . '_ficha_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $file->move(base_path('public/uploads/fichas'), $filename);
+            $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
+        }
+
+        $producto->update($data);
         return response()->json($producto);
     }
 

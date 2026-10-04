@@ -15,7 +15,20 @@ class Producto extends Model
         'precio_base',
         'stock',
         'unidad_medida',
-        'estado'
+        'estado',
+        'tipo',
+        'nombre',
+        'codigo_barras',
+        'presentacion',
+        'largo',
+        'ancho',
+        'alto',
+        'peso',
+        'stock_minimo',
+        'precio_compra',
+        'fecha_actualizacion',
+        'imagen',
+        'ficha_tecnica'
     ];
 
     public function preciosClientes()

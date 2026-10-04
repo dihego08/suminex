@@ -14,7 +14,13 @@ class Cliente extends Model
         'direccion',
         'telefono',
         'email',
-        'estado'
+        'estado',
+        'tipo_pago',
+        'banco',
+        'nro_cuenta',
+        'whatsapp',
+        'tiene_credito',
+        'limite_credito'
     ];
 
     public function preciosPersonalizados()

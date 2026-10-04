@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit, Trash2, Search, User, X } from 'lucide-react';
 
-const API_URL = 'http://localhost:8080/suminex/backend/public/api';
+import { API_URL } from '../config';
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -11,7 +11,10 @@ const Clientes = () => {
 
   // Estados para el Modal
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ ruc: '', razon_social: '', direccion: '', telefono: '', email: '' });
+  const [formData, setFormData] = useState({ 
+    ruc: '', razon_social: '', direccion: '', telefono: '', email: '',
+    tipo_pago: 0, banco: 'BCP', nro_cuenta: '', whatsapp: '', tiene_credito: false, limite_credito: ''
+  });
 
   useEffect(() => {
     fetchClientes();
@@ -33,15 +36,18 @@ const Clientes = () => {
     try {
       await axios.post(`${API_URL}/clientes`, formData);
       setShowModal(false);
-      setFormData({ ruc: '', razon_social: '', direccion: '', telefono: '', email: '' });
+      setFormData({ 
+        ruc: '', razon_social: '', direccion: '', telefono: '', email: '',
+        tipo_pago: 0, banco: 'BCP', nro_cuenta: '', whatsapp: '', tiene_credito: false, limite_credito: ''
+      });
       fetchClientes(); // Recargar la lista
     } catch (error) {
       alert("Error al crear el cliente: " + (error.response?.data?.error || error.message));
     }
   };
 
-  const filteredClientes = clientes.filter(c => 
-    c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredClientes = clientes.filter(c =>
+    c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.ruc.includes(searchTerm)
   );
 
@@ -59,7 +65,7 @@ const Clientes = () => {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
         </div>
-        <button 
+        <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/30"
         >
@@ -110,9 +116,8 @@ const Clientes = () => {
                         {cliente.email && <div>{cliente.email}</div>}
                       </td>
                       <td className="p-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          cliente.estado ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cliente.estado ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {cliente.estado ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
@@ -145,31 +150,79 @@ const Clientes = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleCreate} className="p-6">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">RUC *</label>
-                  <input type="text" required value={formData.ruc} onChange={(e) => setFormData({...formData, ruc: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <input type="text" required value={formData.ruc} onChange={(e) => setFormData({ ...formData, ruc: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
-                  <input type="text" required value={formData.razon_social} onChange={(e) => setFormData({...formData, razon_social: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <input type="text" required value={formData.razon_social} onChange={(e) => setFormData({ ...formData, razon_social: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                  <input type="text" value={formData.direccion} onChange={(e) => setFormData({...formData, direccion: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <input type="text" value={formData.direccion} onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                    <input type="text" value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input type="text" value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                    <input type="text" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pago</label>
+                    <select value={formData.tipo_pago} onChange={(e) => setFormData({ ...formData, tipo_pago: Number(e.target.value) })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                      <option value={0}>Efectivo</option>
+                      <option value={1}>Bancarizado</option>
+                    </select>
+                  </div>
+                  
+                  {formData.tipo_pago === 1 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Banco</label>
+                      <select value={formData.banco} onChange={(e) => setFormData({ ...formData, banco: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="BCP">BCP</option>
+                        <option value="INTERBANK">INTERBANK</option>
+                        <option value="SCOTIABANK">SCOTIABANK</option>
+                        <option value="BBVA_CONTINENTAL">BBVA CONTINENTAL</option>
+                        <option value="BANCO_DE_CREDITO">BANCO DE CREDITO</option>
+                        <option value="MiBanco">MiBanco</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {formData.tipo_pago === 1 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nro de Cuenta</label>
+                    <input type="text" value={formData.nro_cuenta} onChange={(e) => setFormData({ ...formData, nro_cuenta: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 mt-2">
+                  <input type="checkbox" id="tiene_credito" checked={formData.tiene_credito} onChange={(e) => setFormData({ ...formData, tiene_credito: e.target.checked })} className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  <label htmlFor="tiene_credito" className="text-sm font-medium text-gray-700">Activar Crédito</label>
+                </div>
+
+                {formData.tiene_credito && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Límite de Crédito</label>
+                    <input type="number" step="0.01" value={formData.limite_credito} onChange={(e) => setFormData({ ...formData, limite_credito: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                )}
               </div>
               <div className="mt-8 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 import { API_URL } from '../config';
 
-const NuevaCotizacion = () => {
+const NuevaOrden = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -39,7 +39,7 @@ const NuevaCotizacion = () => {
     axios.get(`${API_URL}/productos`).then(res => setProductos(res.data));
 
     if (isEditing) {
-      axios.get(`${API_URL}/cotizaciones/${id}`).then(res => {
+      axios.get(`${API_URL}/ordenes/${id}`).then(res => {
         const cot = res.data;
         setFormData({
           id_cliente: cot.id_cliente,
@@ -98,7 +98,7 @@ const NuevaCotizacion = () => {
     let finalPrice = prod.precio_base;
     const baseUnit = prod.unidad_medida || 'UND';
     
-    // Historial de precios por cliente (buscando la unidad base por defecto)
+    // Historial de precios por cliente
     if (formData.id_cliente && prod.precios_clientes) {
       const precioEspecial = prod.precios_clientes.find(pc => pc.id_cliente === formData.id_cliente && (pc.unidad_medida === baseUnit || !pc.unidad_medida));
       if (precioEspecial) {
@@ -172,14 +172,14 @@ const NuevaCotizacion = () => {
       };
 
       if (isEditing) {
-        await axios.put(`${API_URL}/cotizaciones/${id}`, payload);
+        await axios.put(`${API_URL}/ordenes/${id}`, payload);
       } else {
-        await axios.post(`${API_URL}/cotizaciones`, payload);
+        await axios.post(`${API_URL}/ordenes`, payload);
       }
       
-      navigate('/cotizaciones');
+      navigate('/ordenes');
     } catch (error) {
-      alert("Error al guardar la cotización");
+      alert("Error al guardar la orden de pedido");
       console.error(error);
     }
   };
@@ -191,19 +191,19 @@ const NuevaCotizacion = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <Link to="/cotizaciones" className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-800 rounded-full transition-colors">
+        <Link to="/ordenes" className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-800 rounded-full transition-colors">
           <ArrowLeft size={24} />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-            {isEditing ? 'Editar Cotización' : 'Crear Nueva Cotización'}
+            {isEditing ? 'Editar Orden de Pedido' : 'Crear Nueva Orden de Pedido'}
           </h1>
           <p className="text-sm text-gray-500 mt-1">Complete los detalles para generar un nuevo presupuesto</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Encabezado de la Cotización */}
+        {/* Encabezado de la Orden de Pedido */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <Receipt className="text-blue-500" size={20} /> Detalles Generales
@@ -278,7 +278,7 @@ const NuevaCotizacion = () => {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <FileText className="text-blue-500" size={20} /> Ítems de Cotización
+              <FileText className="text-blue-500" size={20} /> Ítems de Orden de Pedido
             </h2>
             <button 
               type="button" 
@@ -393,7 +393,6 @@ const NuevaCotizacion = () => {
                                     if (precioEspecial) newPrice = precioEspecial.precio_personalizado;
                                   }
                                 } else {
-                                  // Primero buscamos si hay precio especial de cliente directo para esta unidad!
                                   let hasSpecialUnitPrice = false;
                                   if (formData.id_cliente && prod.precios_clientes) {
                                     const precioEspecial = prod.precios_clientes.find(pc => pc.id_cliente === formData.id_cliente && pc.unidad_medida === selected);
@@ -474,7 +473,7 @@ const NuevaCotizacion = () => {
                   {detalles.length === 0 && (
                     <tr>
                       <td colSpan="8" className="p-8 text-center text-gray-500">
-                        No hay ítems en la cotización. Haga clic en "Añadir Ítem" para comenzar.
+                        No hay ítems en la orden de pedido. Haga clic en "Añadir Ítem" para comenzar.
                       </td>
                     </tr>
                   )}
@@ -520,7 +519,7 @@ const NuevaCotizacion = () => {
             type="submit" 
             className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 w-full md:w-auto"
           >
-            <Save size={20} /> {isEditing ? 'Actualizar Cotización' : 'Guardar Cotización'}
+            <Save size={20} /> {isEditing ? 'Actualizar Orden de Pedido' : 'Guardar Orden de Pedido'}
           </button>
         </div>
       </form>
@@ -528,5 +527,5 @@ const NuevaCotizacion = () => {
   );
 };
 
-export default NuevaCotizacion;
+export default NuevaOrden;
 

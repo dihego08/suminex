@@ -12,6 +12,7 @@ class PrecioCliente extends Model
     protected $fillable = [
         'id_producto',
         'id_cliente',
+        'unidad_medida',
         'precio_personalizado'
     ];
 

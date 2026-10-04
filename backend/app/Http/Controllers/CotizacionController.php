@@ -11,7 +11,7 @@ class CotizacionController extends Controller
 {
     public function index()
     {
-        $cotizaciones = Cotizacion::with('cliente')->orderBy('id', 'desc')->get();
+        $cotizaciones = Cotizacion::with(['cliente', 'detalles.producto'])->orderBy('id', 'desc')->get();
         return response()->json($cotizaciones);
     }
 
@@ -36,10 +36,10 @@ class CotizacionController extends Controller
         DB::beginTransaction();
 
         try {
-            // Generar número (CT00000001)
+            // Generar número (COT-100, etc.)
             $ultimo = Cotizacion::orderBy('id', 'desc')->first();
-            $num = $ultimo ? (int)substr($ultimo->numero, 2) + 1 : 1;
-            $numeroGenerado = 'CT' . str_pad($num, 8, '0', STR_PAD_LEFT);
+            $num = $ultimo ? (int)str_replace('COT-', '', $ultimo->numero) + 1 : 100;
+            $numeroGenerado = 'COT-' . $num;
 
             $cotizacion = Cotizacion::create([
                 'numero' => $numeroGenerado,
@@ -49,7 +49,8 @@ class CotizacionController extends Controller
                 'base_imponible' => $request->base_imponible,
                 'igv' => $request->igv,
                 'total' => $request->total,
-                'estado' => 'Pendiente'
+                'estado' => 'Pendiente',
+                'terminos_condiciones' => $request->terminos_condiciones
             ]);
 
             foreach ($request->detalles as $det) {
@@ -69,6 +70,72 @@ class CotizacionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => 'Error al crear cotización', 'msg' => $e->getMessage()], 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->validate($request, [
+            'id_cliente' => 'required|exists:clientes,id',
+            'fecha' => 'required|date',
+            'fecha_vencimiento' => 'required|date',
+            'base_imponible' => 'required|numeric',
+            'igv' => 'required|numeric',
+            'total' => 'required|numeric',
+            'detalles' => 'required|array',
+        ]);
+
+        $cotizacion = Cotizacion::findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            $cotizacion->update([
+                'id_cliente' => $request->id_cliente,
+                'fecha' => $request->fecha,
+                'fecha_vencimiento' => $request->fecha_vencimiento,
+                'base_imponible' => $request->base_imponible,
+                'igv' => $request->igv,
+                'total' => $request->total,
+                'terminos_condiciones' => $request->terminos_condiciones
+            ]);
+
+            // Borrar detalles antiguos y crear los nuevos
+            CotizacionDetalle::where('id_cotizacion', $cotizacion->id)->delete();
+
+            foreach ($request->detalles as $det) {
+                CotizacionDetalle::create([
+                    'id_cotizacion' => $cotizacion->id,
+                    'id_producto' => $det['id_producto'],
+                    'descripcion_personalizada' => $det['descripcion_personalizada'] ?? null,
+                    'cantidad' => $det['cantidad'],
+                    'precio_unitario' => $det['precio_unitario'],
+                    'total' => $det['total'],
+                ]);
+            }
+
+            DB::commit();
+            return response()->json($cotizacion, 200);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error al actualizar cotización', 'msg' => $e->getMessage()], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $cotizacion = Cotizacion::findOrFail($id);
+        
+        DB::beginTransaction();
+        try {
+            CotizacionDetalle::where('id_cotizacion', $id)->delete();
+            $cotizacion->delete();
+            DB::commit();
+            return response()->json(['message' => 'Cotización eliminada correctamente']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error al eliminar cotización', 'msg' => $e->getMessage()], 500);
         }
     }
 }

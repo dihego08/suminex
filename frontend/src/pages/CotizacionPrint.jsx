@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Printer, ArrowLeft } from 'lucide-react';
 
-const API_URL = 'http://localhost:8080/suminex/backend/public/api';
+import { API_URL } from '../config';
 
 const CotizacionPrint = () => {
   const { id } = useParams();
@@ -44,7 +44,7 @@ const CotizacionPrint = () => {
 
       {/* Hoja A4 */}
       <div className="max-w-4xl mx-auto bg-white p-12 shadow-xl print:shadow-none print:p-0 print:max-w-none text-gray-800 font-sans" style={{ minHeight: '297mm' }}>
-        
+
         {/* Encabezado */}
         <div className="flex justify-between items-start mb-8">
           <div>
@@ -52,13 +52,8 @@ const CotizacionPrint = () => {
             <p className="text-sm text-gray-600 mb-0.5">RUC: 20615095932</p>
             <p className="text-sm text-gray-600">suminexsac@gmail.com</p>
           </div>
-          <div className="w-48 text-right flex flex-col items-end">
-             {/* Logo Placeholder (Puedes cambiar el SRC por tu imagen real) */}
-             <div className="text-[#1c4c82] font-black text-3xl italic tracking-tighter flex items-center mb-1">
-                <span className="bg-[#1c4c82] text-white p-1 px-2 rounded mr-1">S</span>
-                SUMINEX
-             </div>
-             <p className="text-[9px] font-bold tracking-widest text-[#1c4c82] uppercase">Logistica y Abastecimiento</p>
+          <div className="w-48 flex justify-end">
+            <img src="/logo-4.png" alt="Logo" className="w-[180px] object-contain mb-2" />
           </div>
         </div>
 
@@ -113,14 +108,14 @@ const CotizacionPrint = () => {
             <p>Contacto: 929 288 621 / 973 411 490 / 920 870 534</p>
           </div>
           <div className="w-1/2 flex flex-col items-end">
-             <div className="w-full flex justify-between mb-1"><span className="font-bold">TOTAL (incl. IGV):</span> <span>{parseFloat(cotizacion.total).toFixed(2)}</span></div>
-             <div className="w-full flex justify-between mb-1"><span className="font-bold">Base Imponible:</span> <span>{parseFloat(cotizacion.base_imponible).toFixed(2)}</span></div>
-             <div className="w-full flex justify-between mb-2"><span className="font-bold">IGV (18%):</span> <span>{parseFloat(cotizacion.igv).toFixed(2)}</span></div>
-             
-             <div className="w-full bg-[#3b4b6b] text-white p-2 flex justify-between items-center font-bold">
-               <span>TOTAL:</span>
-               <span>{parseFloat(cotizacion.total).toFixed(2)}</span>
-             </div>
+            <div className="w-full flex justify-between mb-1"><span className="font-bold">TOTAL (incl. IGV):</span> <span>{parseFloat(cotizacion.total).toFixed(2)}</span></div>
+            <div className="w-full flex justify-between mb-1"><span className="font-bold">Base Imponible:</span> <span>{parseFloat(cotizacion.base_imponible).toFixed(2)}</span></div>
+            <div className="w-full flex justify-between mb-2"><span className="font-bold">IGV (18%):</span> <span>{parseFloat(cotizacion.igv).toFixed(2)}</span></div>
+
+            <div className="w-full bg-[#3b4b6b] text-white p-2 flex justify-between items-center font-bold">
+              <span>TOTAL:</span>
+              <span>{parseFloat(cotizacion.total).toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
