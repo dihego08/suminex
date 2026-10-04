@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Proveedor extends Model
 {
     protected $table = 'proveedores';
-    
+
     protected $fillable = [
         'razon_social',
         'ruc',
@@ -16,4 +16,9 @@ class Proveedor extends Model
         'email',
         'estado'
     ];
+
+    public function compras()
+    {
+        return $this->hasMany(Compra::class, 'id_proveedor');
+    }
 }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Search, Package, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package, X, FileText } from 'lucide-react';
 
-import { API_URL } from '../config';
+import { API_URL, SERVER_URL } from '../config';
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
@@ -13,6 +13,7 @@ const Productos = () => {
 
   // Estados para el Modal
   const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
     codigo: '',
     descripcion: '',
@@ -130,7 +131,9 @@ const Productos = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-sm uppercase tracking-wider">
+                  <th className="p-4 font-semibold w-16">Imagen</th>
                   <th className="p-4 font-semibold">Código</th>
+                  <th className="p-4 font-semibold">Nombre</th>
                   <th className="p-4 font-semibold">Descripción</th>
                   <th className="p-4 font-semibold text-center">Stock</th>
                   <th className="p-4 font-semibold text-right">Precio Base</th>
@@ -147,16 +150,32 @@ const Productos = () => {
                 ) : (
                   filteredProductos.map((producto) => (
                     <tr key={producto.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="p-4">
+                        {producto.imagen ? (
+                          <img 
+                            src={`${SERVER_URL}/images/products/${producto.imagen}`} 
+                            alt={producto.nombre}
+                            className="w-10 h-10 object-cover rounded shadow-sm border border-gray-200 cursor-pointer hover:scale-105 transition-transform"
+                            onClick={() => setSelectedImage(producto.imagen)}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded flex items-center justify-center text-gray-400">
+                            <Package size={20} strokeWidth={1.5} />
+                          </div>
+                        )}
+                      </td>
                       <td className="p-4 font-medium text-gray-900">{producto.codigo}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                            <Package size={16} />
-                          </div>
                           <div>
-                            <div className="font-medium text-gray-800">{producto.descripcion}</div>
+                            <div className="font-medium text-gray-800">{producto.nombre}</div>
                             {producto.marca && <div className="text-xs text-gray-500">{producto.marca}</div>}
                           </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="text-xs text-gray-500">{producto.descripcion}</div>
                         </div>
                       </td>
                       <td className="p-4 text-center">
@@ -172,6 +191,17 @@ const Productos = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center gap-3">
+                          {producto.ficha_tecnica && (
+                            <a 
+                              href={`${SERVER_URL}/${producto.ficha_tecnica}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Descargar Ficha Técnica"
+                            >
+                              <FileText size={18} />
+                            </a>
+                          )}
                           <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
                             <Edit size={18} />
                           </button>
@@ -397,6 +427,44 @@ const Productos = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <X size={32} />
+            </button>
+            <img 
+              src={`${SERVER_URL}/images/${selectedImage}`} 
+              alt="Producto" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <X size={32} />
+            </button>
+            <img 
+              src={`${SERVER_URL}/images/products/${selectedImage}`} 
+              alt="Producto" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
           </div>
         </div>
       )}

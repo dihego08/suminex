@@ -76,10 +76,42 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('permissions/menus', 'MenuController@userMenus');
     $router->post('permissions/save', 'MenuController@saveUserMenus');
 
+    // Rutas para Compras
+    $router->get('compras', 'CompraController@index');
+    $router->get('compras/{id}', 'CompraController@show');
+    $router->post('compras', 'CompraController@store');
+    $router->delete('compras/{id}', 'CompraController@destroy');
+
+    // Rutas para Proveedores
+    $router->get('proveedores', 'ProveedorController@index');
+    $router->get('proveedores/{id}', 'ProveedorController@show');
+    $router->post('proveedores', 'ProveedorController@store');
+    $router->put('proveedores/{id}', 'ProveedorController@update');
+    $router->delete('proveedores/{id}', 'ProveedorController@destroy');
+
+    // Rutas para Inventario y Kardex
+    $router->get('inventario', 'InventarioController@index');
+    $router->get('inventario/{id}/kardex', 'InventarioController@kardex');
+    $router->post('inventario/ajuste', 'InventarioController@ajusteStock');
+
     $router->get('ventas/{id}/pdf', 'VentaController@descargarPdf');
     $router->get('ventas/{id}/pdf_nc', 'VentaController@descargarPdfNC');
     $router->get('ventas/{id}/xml', 'VentaController@descargarXml');
     $router->get('ventas/{id}/cdr', 'VentaController@descargarCdr');
     $router->post('ventas/{id}/anular', 'VentaController@anularVenta');
+
+    // Rutas para Guías de Remisión
+    $router->get('guias/next-num', 'GuiaController@nextNumGuia');
+    $router->get('guias/search-products', 'GuiaController@searchProducts');
+    $router->get('guias/departamentos', 'GuiaController@getDepartamentos');
+    $router->get('guias/provincias', 'GuiaController@getProvincias');
+    $router->get('guias/distritos', 'GuiaController@getDistritos');
+    $router->get('guias', 'GuiaController@index');
+    $router->post('guias', 'GuiaController@store');
+    $router->get('guias/{id}/detalle', 'GuiaController@show');
+    $router->put('guias/{id}', 'GuiaController@update');
+    $router->delete('guias/{id}', 'GuiaController@destroy');
+    $router->get('guias/{id}/pdf', 'GuiaPdfController@downloadGuiaPdf');
+    $router->post('guias/{id}/send-sunat', 'GuiaController@sendToSunat');
 
 });

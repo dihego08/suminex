@@ -103,6 +103,28 @@ class VentaController extends Controller
                     'precio_unitario' => $det['precio_unitario'],
                     'total' => $det['total'],
                 ]);
+
+                // Descontar stock del producto y registrar salida en Kardex
+                $producto = Producto::find($det['id_producto']);
+                if ($producto) {
+                    $producto->stock = max(0, floatval($producto->stock) - floatval($det['cantidad']));
+                    $producto->fecha_actualizacion = date('Y-m-d H:i:s');
+                    $producto->save();
+                }
+
+                \App\Models\Operation::create([
+                    'product_id' => $det['id_producto'],
+                    'stock_id' => 1,
+                    'q' => $det['cantidad'],
+                    'price_in' => 0,
+                    'price_out' => $det['precio_unitario'],
+                    'operation_type_id' => 2, // 2: Salida por Venta
+                    'sell_id' => $venta->id,
+                    'status' => 1,
+                    'is_draft' => 0,
+                    'is_traspase' => 0,
+                    'created_at' => $venta->fecha_emision . ' ' . date('H:i:s'),
+                ]);
             }
 
             if ($request->id_forma_pago == 2 && !empty($request->cuotas)) {
@@ -537,6 +559,30 @@ class VentaController extends Controller
                 $venta->motivo_anulacion = $request->motivo;
                 $venta->correlativo_nc = $serieNC . '-' . $correlativoNCNum;
                 $venta->save();
+
+                // Reponer stock de los productos vendidos e ingresar movimiento a Kardex
+                foreach ($detallesObj as $det) {
+                    $producto = Producto::find($det->id_producto);
+                    if ($producto) {
+                        $producto->stock = floatval($producto->stock) + floatval($det->cantidad);
+                        $producto->fecha_actualizacion = date('Y-m-d H:i:s');
+                        $producto->save();
+                    }
+
+                    \App\Models\Operation::create([
+                        'product_id' => $det->id_producto,
+                        'stock_id' => 1,
+                        'q' => $det->cantidad,
+                        'price_in' => $det->precio_unitario,
+                        'price_out' => 0,
+                        'operation_type_id' => 5, // 5: Devolución / Anulación
+                        'sell_id' => $venta->id,
+                        'status' => 1,
+                        'is_draft' => 0,
+                        'is_traspase' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
 
                 // Sincronizar con legacy aux y ventas_cabecera si existen
                 try {

@@ -14,6 +14,13 @@ import VentaPrint from './pages/VentaPrint';
 import Login from './pages/Login';
 import Permissions from './pages/Permissions';
 import PreciosCliente from './pages/PreciosCliente';
+import Compras from './pages/Compras';
+import NuevaCompra from './pages/NuevaCompra';
+import Inventario from './pages/Inventario';
+import Proveedores from './pages/Proveedores';
+import Guias from './pages/Guias';
+import NuevaGuia from './pages/NuevaGuia';
+import EditarGuia from './pages/EditarGuia';
 
 function App() {
   const [token, setToken] = React.useState(localStorage.getItem('token'));
@@ -44,6 +51,7 @@ function App() {
           <Route path="/" element={<h1 className="text-2xl font-bold text-gray-800">Dashboard Principal</h1>} />
           <Route path="/productos" element={<Productos />} />
           <Route path="/clientes" element={<Clientes />} />
+          <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/cotizaciones" element={<Cotizaciones />} />
           <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
           <Route path="/cotizaciones/editar/:id" element={<NuevaCotizacion />} />
@@ -55,8 +63,14 @@ function App() {
           <Route path="/ventas/nueva" element={<NuevaVenta />} />
           <Route path="/ventas/editar/:id" element={<NuevaVenta />} />
           <Route path="/ventas/:id/imprimir" element={<VentaPrint />} />
+          <Route path="/compras" element={<Compras />} />
+          <Route path="/compras/nueva" element={<NuevaCompra />} />
+          <Route path="/inventario" element={<Inventario />} />
           <Route path="/permissions" element={<Permissions />} />
           <Route path="/precios-cliente" element={<PreciosCliente />} />
+          <Route path="/guias" element={<Guias />} />
+          <Route path="/guias/new" element={<NuevaGuia />} />
+          <Route path="/guias/:id/edit" element={<EditarGuia />} />
         </Routes>
       </Layout>
     </Router>

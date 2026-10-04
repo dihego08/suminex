@@ -10,3 +10,11 @@ report/
 res/
 storage/
 contingencia/
+peruvian_ref/
+*.png
+*.jpg
+*.jpeg
+*.jfif
+*.PNG
+*.JPG
+*.webp
