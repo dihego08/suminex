@@ -126,7 +126,11 @@ class ProductoController extends Controller
 
     public function destroy($id)
     {
-        Producto::destroy($id);
-        return response()->json(['message' => 'Producto eliminado con éxito']);
+        try {
+            Producto::destroy($id);
+            return response()->json(['message' => 'Producto eliminado con éxito']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'No se puede eliminar el producto porque está siendo usado en otros registros.'], 500);
+        }
     }
 }

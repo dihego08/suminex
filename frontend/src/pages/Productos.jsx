@@ -144,8 +144,8 @@ const Productos = () => {
   };
 
   const filteredProductos = productos.filter(p =>
-    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.codigo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
