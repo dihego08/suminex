@@ -15,7 +15,7 @@ class PrecioClienteController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $this->validate($request, [
             'id_producto' => 'required|integer',
             'id_cliente' => 'required|integer',
             'unidad_medida' => 'nullable|string|max:20',
@@ -41,7 +41,7 @@ class PrecioClienteController extends Controller
     {
         $precio = PrecioCliente::findOrFail($id);
         
-        $request->validate([
+        $this->validate($request, [
             'precio_personalizado' => 'required|numeric'
         ]);
 

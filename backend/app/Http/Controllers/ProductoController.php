@@ -92,8 +92,36 @@ class ProductoController extends Controller
             $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
         }
 
-        $producto->update($data);
-        return response()->json($producto);
+        DB::beginTransaction();
+        try {
+            $producto->update($data);
+
+            if ($request->has('unidades_secundarias')) {
+                $unidades = $request->input('unidades_secundarias');
+                if (is_string($unidades)) {
+                    $unidades = json_decode($unidades, true);
+                }
+
+                ProductoUnidad::where('id_producto', $producto->id)->delete();
+
+                if (!empty($unidades) && is_array($unidades)) {
+                    foreach ($unidades as $unidad) {
+                        ProductoUnidad::create([
+                            'id_producto' => $producto->id,
+                            'unidad_medida' => $unidad['unidad_medida'],
+                            'factor_conversion' => $unidad['factor_conversion'],
+                            'precio' => $unidad['precio'] ?? null,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json($producto);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error al actualizar producto', 'msg' => $e->getMessage()], 500);
+        }
     }
 
     public function destroy($id)

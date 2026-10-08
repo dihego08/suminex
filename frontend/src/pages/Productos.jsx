@@ -14,6 +14,7 @@ const Productos = () => {
   // Estados para el Modal
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     codigo: '',
     descripcion: '',
@@ -72,7 +73,7 @@ const Productos = () => {
     }
   };
 
-  const handleCreate = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const form = new FormData();
@@ -83,14 +84,62 @@ const Productos = () => {
           form.append(key, formData[key]);
         }
       });
-      await axios.post(`${API_URL}/productos`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+
+      if (editingId) {
+        form.append('_method', 'PUT');
+        await axios.post(`${API_URL}/productos/${editingId}`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        await axios.post(`${API_URL}/productos`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+
       setShowModal(false);
+      setEditingId(null);
       setFormData({ codigo: '', descripcion: '', marca: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
       fetchProductos(); // Recargar la lista
     } catch (error) {
-      alert("Error al crear el producto: " + (error.response?.data?.error || error.message));
+      alert(`Error al ${editingId ? 'actualizar' : 'crear'} el producto: ` + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleEdit = (producto) => {
+    setFormData({
+      codigo: producto.codigo || '',
+      descripcion: producto.descripcion || '',
+      marca: producto.marca || '',
+      unidad_medida: producto.unidad_medida || 'UND',
+      stock: producto.stock || 0,
+      precio_base: producto.precio_base || 0,
+      tipo: producto.tipo || 1,
+      nombre: producto.nombre || '',
+      codigo_barras: producto.codigo_barras || '',
+      presentacion: producto.presentacion || '',
+      largo: producto.largo || '',
+      ancho: producto.ancho || '',
+      alto: producto.alto || '',
+      peso: producto.peso || '',
+      stock_minimo: producto.stock_minimo || 10,
+      precio_compra: producto.precio_compra || 0,
+      fecha_actualizacion: producto.fecha_actualizacion || '',
+      imagen: null,
+      ficha_tecnica: null,
+      unidades_secundarias: producto.unidades_secundarias || []
+    });
+    setEditingId(producto.id);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+      try {
+        await axios.delete(`${API_URL}/productos/${id}`);
+        fetchProductos();
+      } catch (error) {
+        alert("Error al eliminar el producto: " + (error.response?.data?.error || error.message));
+      }
     }
   };
 
@@ -114,7 +163,11 @@ const Productos = () => {
           />
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingId(null);
+            setFormData({ codigo: '', descripcion: '', marca: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
+            setShowModal(true);
+          }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/30"
         >
           <Plus size={20} />
@@ -202,10 +255,10 @@ const Productos = () => {
                               <FileText size={18} />
                             </a>
                           )}
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
+                          <button onClick={() => handleEdit(producto)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
                             <Edit size={18} />
                           </button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+                          <button onClick={() => handleDelete(producto.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
                             <Trash2 size={18} />
                           </button>
                         </div>
@@ -224,13 +277,13 @@ const Productos = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-bold text-gray-800">Registrar Nuevo Producto</h3>
+              <h3 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Producto' : 'Registrar Nuevo Producto'}</h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-6 overflow-y-auto">
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto">
               <div className="space-y-4">
                 {/* Archivos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -423,7 +476,7 @@ const Productos = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="px-5 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30">
-                  Guardar Producto
+                  {editingId ? 'Actualizar Producto' : 'Guardar Producto'}
                 </button>
               </div>
             </form>

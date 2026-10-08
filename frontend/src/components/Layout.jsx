@@ -37,7 +37,7 @@ const MenuItem = ({ item, level = 0 }) => {
           style={{ paddingLeft: `${level * 1 + 1}rem` }}
         >
           <div className="flex items-center gap-3">
-            <i className={`${item.icon} w-5 text-center`}></i>
+            <i className={`${item.icon?.startsWith('fa-') ? 'fa ' : ''}${item.icon} w-5 text-center`}></i>
             <span className="font-medium text-sm tracking-wide uppercase">{item.name}</span>
           </div>
           <i className={`fa ${isOpen ? 'fa-angle-up' : 'fa-angle-down'}`}></i>
@@ -66,7 +66,7 @@ const MenuItem = ({ item, level = 0 }) => {
         }`}
         style={{ paddingLeft: `${level * 1 + 1}rem` }}
       >
-        <i className={`${item.icon} w-5 text-center`}></i>
+        <i className={`${item.icon?.startsWith('fa-') ? 'fa ' : ''}${item.icon} w-5 text-center`}></i>
         <span className="font-medium">{item.name}</span>
       </Link>
     </li>
@@ -102,6 +102,9 @@ const Layout = ({ children, onLogout, user }) => {
 
       } catch (e) {
         console.error("Error loading menu", e);
+        if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+          if (onLogout) onLogout();
+        }
       }
     };
     fetchMenu();
