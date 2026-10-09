@@ -88,7 +88,7 @@ Route::get('/', function () {
     // Menús
     Route::get('menu/navigation', [MenuController::class, 'navigation']);
     Route::get('permissions/users', [MenuController::class, 'users']);
-    Route::get('permissions/menus', [MenuController::class, 'userMenus']);
+    Route::get('permissions/menus/{userId}', [MenuController::class, 'userMenus']);
     Route::post('permissions/save', [MenuController::class, 'saveUserMenus']);
 
     // Rutas para Compras
