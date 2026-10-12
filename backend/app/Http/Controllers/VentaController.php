@@ -250,145 +250,159 @@ class VentaController extends Controller
 
     public function descargarPdf($id)
     {
-        $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas'])->findOrFail($id);
-        
-        $logoPath = base_path("public/img/logo-4.png");
-        if (file_exists($logoPath)) {
-            $logoBase64 = base64_encode(file_get_contents($logoPath));
-            $logoSrc = 'data:image/png;base64,' . $logoBase64;
-        } else {
-            $logoSrc = '';
-        }
-        
+        $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas', 'ordenPedido.cotizacion'])->findOrFail($id);
+        $h = \App\Services\PdfComprobanteHelper::class;
+        $c = $h::COLOR;
+
+        $esFactura = $venta->tipo_documento == '01';
+        $titulo = $esFactura ? 'FACTURA ELECTRÓNICA' : 'BOLETA DE VENTA ELECTRÓNICA';
+        $numero = $h::numeroDocumento($venta->serie, $venta->correlativo);
+        $esUsd = $venta->moneda === 'USD';
+        $simbolo = $esUsd ? '$' : 'S/';
+        $esCredito = $venta->id_forma_pago == 2;
+
+        $cliente = $venta->cliente;
+        $docCliente = (string) ($cliente->ruc ?? '');
+        $labelDoc = strlen($docCliente) === 11 ? 'RUC' : (strlen($docCliente) === 8 ? 'DNI' : 'Documento');
+        $cotizacionRef = optional(optional($venta->ordenPedido)->cotizacion)->numero;
+
+        $hashValido = $venta->sunat_hash && stripos($venta->sunat_hash, 'ERROR') !== 0 ? $venta->sunat_hash : '';
+        $qr = $h::qrDataUri(implode('|', [
+            $h::RUC,
+            $venta->tipo_documento,
+            $venta->serie,
+            $venta->correlativo,
+            number_format($venta->igv, 2, '.', ''),
+            number_format($venta->total, 2, '.', ''),
+            date('Y-m-d', strtotime($venta->fecha_emision)),
+            strlen($docCliente) === 11 ? '6' : '1',
+            $docCliente,
+            $hashValido,
+        ]) . '|');
+
+        $fila = function ($label, $valor) {
+            return '<td class="lbl" style="padding: 3px 0; width: 17%;">' . $label . '</td><td style="padding: 3px 8px 3px 0; width: 33%;">' . $valor . '</td>';
+        };
+
         $html = '<!DOCTYPE html><html><head><meta charset="UTF-8" /><style>'
-            . 'body{font-family: Arial, sans-serif; font-size: 11px; color: #000; margin: 0; padding: 0;}'
-            . 'table{border-collapse: collapse; width: 100%;}'
-            . 'td, th{vertical-align: top;}'
+            . $h::estilosBase('250px')
+            . '#footer{position: fixed; left: 0; right: 0; bottom: -225px; height: 215px;}'
             . '</style></head><body>'
-            . '<div style="width: 700px; margin: 0 auto;">'
-            . '  <table style="margin-bottom: 15px; width: 100%;">'
-            . '    <tr>'
-            . '      <td style="width: 320px;">'
-            . '        <img src="' . $logoSrc . '" style="width: 150px; margin-bottom: 10px;" />'
-            . '        <p style="margin:2px 0;"><strong>Dirección: </strong>JR. MANTARO 100 SEMI RURAL PACHACUTEC ZON FRENTE A LA INTERSECCION AREQUIPA-AREQUIPA-CERRO COLORADO</p>'
-            . '        <p style="margin:2px 0;"><strong>Celular.: </strong>929288621 / 973411490</p>'
-            . '        <p style="margin:2px 0;"><strong>Correo : </strong>suminexsac@gmail.com</p>'
-            . '      </td>'
-            . '      <td style="width: 50px;"></td>'
-            . '      <td style="width: 330px; text-align: center; border: 1px solid #000; border-radius: 5px; padding: 10px;">'
-            . '        <h2 style="margin: 0; font-size: 20px;">' . ($venta->tipo_documento == "01" ? "FACTURA ELECTRÓNICA" : "BOLETA ELECTRÓNICA") . '</h2>'
-            . '        <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">R.U.C.: 20615095932</p>'
-            . '        <p style="margin: 5px 0;">Nro. ' . $venta->serie . ' - ' . $venta->correlativo . '</p>'
-            . '        <p style="margin: 5px 0;">Nro. R.I. Emisor: 212321</p>'
-            . ($venta->guia ? '<p style="margin: 5px 0;"><strong>Guía de Remisión:</strong><br/>' . htmlspecialchars($venta->guia) . '</p>' : '')
-            . '      </td>'
-            . '    </tr>'
-            . '  </table>'
-            
-            . '  <div style="border: 1px solid #000; border-radius: 10px; padding: 10px; margin-bottom: 15px;">'
-            . '    <table style="width: 100%;">'
-            . '      <tr>'
-            . '        <td style="width: 55%;">'
-            . '          <p style="margin:2px 0;"><strong>Razón Social: </strong>' . htmlspecialchars($venta->cliente->razon_social ?? '-') . '</p>'
-            . '          <p style="margin:2px 0;"><strong>Fecha Emisión: </strong>' . $venta->fecha_emision . '</p>'
-            . '          <p style="margin:2px 0;"><strong>Tipo Moneda: </strong>SOLES</p>'
-            . '        </td>'
-            . '        <td style="width: 45%;">'
-            . '          <p style="margin:2px 0;"><strong>RUC: </strong>' . htmlspecialchars($venta->cliente->ruc ?? '-') . '</p>'
-            . '          <p style="margin:2px 0;"><strong>Dirección: </strong>' . htmlspecialchars($venta->cliente->direccion ?? '-') . '</p>'
-            . '        </td>'
-            . '      </tr>'
-            . '    </table>'
-            . '  </div>'
-            
-            . '  <table style="width: 100%; border: 1px solid #000; margin-bottom: 15px; text-align: center;">'
-            . '    <tr style="border-bottom: 1px solid #000;">'
-            . '      <th style="padding: 5px; border-right: 1px solid #000; width: 100px;">Cantidad</th>'
-            . '      <th style="padding: 5px; border-right: 1px solid #000; text-align: left;">Descripción</th>'
-            . '      <th style="padding: 5px; border-right: 1px solid #000; width: 100px;">Valor Unitario</th>'
-            . '      <th style="padding: 5px; width: 100px;">Valor Total</th>'
-            . '    </tr>';
-            
+
+            . '<div id="footer">'
+            . $h::datosBancarios()
+            . '<div style="border-top: 1px solid #cfd3da; margin-top: 10px; padding-top: 6px; text-align: center; font-size: 8.5px; color: #666;">'
+            . 'Representación impresa de la ' . ($esFactura ? 'Factura' : 'Boleta de Venta') . ' Electrónica. Puede consultar su validez en www.sunat.gob.pe con su clave SOL, o en el portal del emisor.'
+            . '</div>'
+            . '</div>'
+
+            . $h::cabecera($titulo, $numero, true)
+
+            . '<div class="box" style="margin-bottom: 16px;"><table>'
+            . '<tr>' . $fila('Cliente:', $h::valor($cliente->razon_social ?? '')) . $fila('Fecha de emisión:', $h::fecha($venta->fecha_emision)) . '</tr>'
+            . '<tr>' . $fila($labelDoc . ':', $h::valor($docCliente)) . $fila('Moneda:', $esUsd ? 'DÓLARES (USD)' : 'SOLES (PEN)') . '</tr>'
+            . '<tr>' . $fila('Dirección:', $h::valor($cliente->direccion ?? '')) . $fila('Forma de pago:', $esCredito ? 'Crédito' : 'Contado') . '</tr>'
+            . '<tr>' . $fila('Teléfono:', $h::valor($cliente->telefono ?? '')) . $fila('Vencimiento:', $esCredito ? $h::fecha($venta->fecha_vencimiento) : '—') . '</tr>'
+            . '<tr>' . $fila('Cotización ref.:', $h::valor($cotizacionRef)) . $fila('Orden de compra:', '—') . '</tr>'
+            . '</table></div>'
+
+            . '<div style="border: 1px solid #555; border-top: none;">'
+            . '<table class="items">'
+            . '<tr>'
+            . '<th style="width: 5%; text-align: center;">ÍTEM</th>'
+            . '<th style="width: 10%; text-align: center;">CÓDIGO</th>'
+            . '<th style="text-align: center;">Descripción</th>'
+            . '<th style="width: 6%; text-align: center;">Und</th>'
+            . '<th style="width: 7%; text-align: center;">Cant.</th>'
+            . '<th style="width: 11%; text-align: right;">Valor unit.</th>'
+            . '<th style="width: 11%; text-align: right;">Precio unit.</th>'
+            . '<th style="width: 11%; text-align: right;">Valor venta</th>'
+            . '</tr>';
+
+        $i = 0;
         foreach ($venta->detalles as $item) {
-            $desc = htmlspecialchars($item->producto->nombre ?? '');
-            if ($item->descripcion_personalizada) $desc .= ' - ' . htmlspecialchars($item->descripcion_personalizada);
-            $html .= '    <tr style="border-bottom: 1px solid #ccc;">'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc;">' . $item->cantidad . ' ' . ($item->unidad_medida ?? 'UND') . '</td>'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc; text-align: left;">' . $desc . '</td>'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc;">S/ ' . number_format($item->precio_unitario, 2) . '</td>'
-                . '      <td style="padding: 5px;">S/ ' . number_format($item->total, 2) . '</td>'
-                . '    </tr>';
+            $i++;
+            $desc = e($item->producto->nombre ?? '');
+            if ($item->descripcion_personalizada) $desc .= ' - ' . e($item->descripcion_personalizada);
+            $html .= '<tr>'
+                . '<td style="text-align: center;">' . $i . '</td>'
+                . '<td style="text-align: center;">' . e($item->producto->codigo ?? '') . '</td>'
+                . '<td>' . $desc . '</td>'
+                . '<td style="text-align: center;">' . e($item->producto->unidad_medida ?? 'UND') . '</td>'
+                . '<td style="text-align: center;">' . number_format($item->cantidad, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->precio_unitario, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->precio_unitario * 1.18, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->cantidad * $item->precio_unitario, 2) . '</td>'
+                . '</tr>';
         }
-        
+
         if ($venta->descuento > 0) {
-            $html .= '    <tr style="border-bottom: 1px solid #ccc;">'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc;"></td>'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc; text-align: left; font-weight: bold; text-transform: uppercase;">' . ($venta->desc_descuento ?: 'DESCUENTO') . '</td>'
-                . '      <td style="padding: 5px; border-right: 1px solid #ccc;">S/ -' . number_format($venta->descuento, 2) . '</td>'
-                . '      <td style="padding: 5px;">S/ -' . number_format($venta->descuento, 2) . '</td>'
-                . '    </tr>';
+            $i++;
+            $html .= '<tr>'
+                . '<td></td><td></td>'
+                . '<td style="font-weight: bold; text-transform: uppercase;">' . e($venta->desc_descuento ?: 'DESCUENTO') . '</td>'
+                . '<td></td><td></td><td></td><td></td>'
+                . '<td style="text-align: right;">-' . number_format($venta->descuento, 2) . '</td>'
+                . '</tr>';
         }
-        
-        $html .= '  </table>'
-            
-            . '  <table style="width: 100%;">'
-            . '    <tr>'
-            . '      <td style="width: 65%; padding-right: 20px;">'
-            . '        <p style="font-weight: bold; margin-bottom: 15px;">Son: ' . number_format($venta->total, 2) . ' SOLES</p>'
-            . '        <p style="border-bottom: 1px solid #000; font-weight: bold; padding-bottom: 5px;">Información Adicional</p>'
-            . '        <table style="width: 100%; margin-top: 5px;">'
-            . '          <tr><td style="font-weight: bold; width: 150px; padding: 2px 0;">Tipo de Transacción:</td><td style="border-bottom: 1px solid #ccc;">' . htmlspecialchars($venta->forma_pago->nombre ?? 'Contado') . '</td></tr>'
-            . '          <tr><td style="font-weight: bold; padding: 2px 0;">Condición de Pago:</td><td style="border-bottom: 1px solid #ccc;">' . htmlspecialchars($venta->estado_pago->nombre ?? 'Pagado') . '</td></tr>'
-            . '          <tr><td style="font-weight: bold; padding: 2px 0;">Fecha de Vencimiento:</td><td style="border-bottom: 1px solid #ccc;">' . $venta->fecha_vencimiento . '</td></tr>'
-            . '        </table>'
-            . '      </td>'
-            . '      <td style="width: 35%;">'
-            . '        <table style="width: 100%;">';
-            
+
+        $relleno = max(0, 190 - $i * 24);
+        $html .= '<tr><td colspan="8" style="height: ' . $relleno . 'px;"></td></tr>'
+            . '</table></div>'
+
+            . '<table style="margin-top: 14px;"><tr>'
+            . '<td style="width: 58%; padding-right: 16px;">'
+            . '<div style="margin-bottom: 10px;"><strong>SON:</strong> ' . $h::montoEnLetras((float) $venta->total, $venta->moneda) . '</div>'
+            . '<table><tr>'
+            . '<td style="width: 104px;">'
+            . ($qr
+                ? '<img src="' . $qr . '" style="width: 96px; height: 96px;" />'
+                : '<div style="width: 96px; height: 96px; border: 1px dashed #999;"></div>')
+            . '</td>'
+            . '<td style="font-size: 9.5px; line-height: 1.5;">'
+            . '<span class="lbl" style="color: #555;">Resumen (hash):</span> <span class="muted">' . ($hashValido ? e($hashValido) : '—') . '</span><br/>'
+            . ($venta->guia ? '<span class="lbl" style="color: #555;">Guía de remisión:</span> <span class="muted">' . e($venta->guia) . '</span><br/>' : '')
+            . '</td>'
+            . '</tr></table>'
+            . '</td>'
+            . '<td style="width: 42%;">'
+            . '<table>';
+
         if ($venta->descuento > 0) {
-            $html .= '          <tr><td style="text-align:right; font-weight:bold; padding: 5px;">Descuento:</td><td style="padding: 5px; border-bottom: 1px solid #ccc; width: 80px;">S/ ' . number_format($venta->descuento, 2) . '</td></tr>';
+            $html .= '<tr><td style="padding: 4px 10px;">Descuento</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->descuento, 2) . '</td></tr>';
         }
-        
-        $html .= '          <tr><td style="text-align:right; font-weight:bold; padding: 5px;">Subtotal:</td><td style="padding: 5px; border-bottom: 1px solid #ccc; width: 80px;">S/ ' . number_format($venta->subtotal, 2) . '</td></tr>'
-            . '          <tr><td style="text-align:right; font-weight:bold; padding: 5px;">I.G.V.:</td><td style="padding: 5px; border-bottom: 1px solid #ccc; width: 80px;">S/ ' . number_format($venta->igv, 2) . '</td></tr>'
-            . '          <tr><td style="text-align:right; font-weight:bold; padding: 5px;">Total:</td><td style="padding: 5px; border-bottom: 1px solid #ccc; width: 80px;">S/ ' . number_format($venta->total, 2) . '</td></tr>'
-            . '        </table>'
-            . '      </td>'
-            . '    </tr>'
-            . '  </table>';
-            
-        if ($venta->id_forma_pago == 2 && count($venta->cuotas) > 0) {
-            $html .= '  <div style="border: 1px solid #000; border-radius: 10px; padding: 10px; margin-top: 15px;">'
-                . '    <h3 style="margin: 0 0 10px 0; font-size: 13px;">Información del Crédito</h3>'
-                . '    <table style="width: 100%; text-align: center; font-size: 11px;">'
-                . '      <tr style="border-bottom: 1px solid #000;">'
-                . '        <th style="padding: 5px; width: 33%;">Número de Cuota</th>'
-                . '        <th style="padding: 5px; width: 33%;">Fecha Vencimiento</th>'
-                . '        <th style="padding: 5px; width: 33%;">Monto</th>'
-                . '      </tr>';
+
+        $html .= '<tr><td style="padding: 4px 10px;">Op. gravadas</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->subtotal, 2) . '</td></tr>'
+            . '<tr><td style="padding: 4px 10px;">IGV (18%)</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->igv, 2) . '</td></tr>'
+            . '<tr><td colspan="2" style="height: 6px;"></td></tr>'
+            . '<tr style="background: ' . $c . '; color: #fff; font-weight: bold; font-size: 13px;">'
+            . '<td style="padding: 8px 10px;">IMPORTE TOTAL</td>'
+            . '<td style="padding: 8px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->total, 2) . '</td>'
+            . '</tr>'
+            . '</table>'
+            . '</td>'
+            . '</tr></table>';
+
+        if ($esCredito && count($venta->cuotas) > 0) {
+            $html .= '<div style="margin-top: 16px; width: 58%;">'
+                . '<table class="items">'
+                . '<tr><th style="text-align: center;">Cuota</th><th style="text-align: center;">Fecha de vencimiento</th><th style="text-align: right;">Monto</th></tr>';
             foreach ($venta->cuotas as $index => $cuota) {
-                $html .= '      <tr style="border-bottom: 1px solid #ccc;">'
-                    . '        <td style="padding: 5px;">Cuota ' . ($index + 1) . '</td>'
-                    . '        <td style="padding: 5px;">' . $cuota->fecha_pago . '</td>'
-                    . '        <td style="padding: 5px;">S/ ' . number_format($cuota->monto, 2) . '</td>'
-                    . '      </tr>';
+                $html .= '<tr style="border-bottom: 1px solid #e5e7eb;">'
+                    . '<td style="text-align: center;">Cuota ' . ($index + 1) . '</td>'
+                    . '<td style="text-align: center;">' . $h::fecha($cuota->fecha_pago) . '</td>'
+                    . '<td style="text-align: right;">' . $simbolo . ' ' . number_format($cuota->monto, 2) . '</td>'
+                    . '</tr>';
             }
-            $html .= '    </table>'
-                . '  </div>';
+            $html .= '</table></div>';
         }
-            
-        $html .= '  <div style="border: 1px solid #000; border-radius: 10px; padding: 10px; margin-top: 15px;">'
-            . '    <p style="font-weight: bold; margin: 0 0 5px 0;">DATOS BANCARIOS (M.N. SOLES):</p>'
-            . '    <p style="margin: 2px 0;"><strong>CTA. CTE BANCO DE CREDITO DEL PERÚ: </strong> 2157415302056  /  C.C.I.: 00221500741530205620</p>'
-            . '    <p style="margin: 2px 0;"><strong>CTA. CTE BANCO INTERBANK: </strong> 300-3008153316  /  C.C.I: 003-300-003008153316-15</p>'
-            . '  </div>'
-            
-            . '</div></body></html>';
+
+        $html .= '</body></html>';
 
         $options = new \Dompdf\Options();
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
-        
+
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->loadHtml($html);

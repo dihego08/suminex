@@ -234,7 +234,7 @@ export default function GuiasView() {
                       <Eye size={16} />
                     </button>
                     <a
-                      href={`${import.meta.env.VITE_API_BASE_URL || 'https://apiperuvian.dbusinessaqp.com/api'}/guias/${g.id}/pdf`}
+                      href={`${import.meta.env.VITE_API_BASE_URL || 'https://apisuminex.dbusinessaqp.com/api'}/guias/${g.id}/pdf`}
                       target="_blank"
                       rel="noreferrer"
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -417,7 +417,7 @@ export default function GuiasView() {
 
               {detailData?.cabecera?.estado == 1 && (
                 <a
-                  href={`${import.meta.env.VITE_API_BASE_URL || 'https://apiperuvian.dbusinessaqp.com/api'}/guias/${detailData.cabecera.id}/pdf`}
+                  href={`${import.meta.env.VITE_API_BASE_URL || 'https://apisuminex.dbusinessaqp.com/api'}/guias/${detailData.cabecera.id}/pdf`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold text-sm transition-colors flex items-center gap-2"
