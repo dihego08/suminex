@@ -80,6 +80,9 @@ const Productos = () => {
       Object.keys(formData).forEach(key => {
         if (key === 'unidades_secundarias') {
           form.append(key, JSON.stringify(formData[key]));
+        } else if (key === 'precio_compra') {
+          const precio = parseFloat(formData[key]);
+          form.append(key, isNaN(precio) ? 0 : precio);
         } else if (formData[key] !== null && formData[key] !== '') {
           form.append(key, formData[key]);
         }
@@ -101,7 +104,11 @@ const Productos = () => {
       setFormData({ codigo: '', descripcion: '', marca: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
       fetchProductos(); // Recargar la lista
     } catch (error) {
-      alert(`Error al ${editingId ? 'actualizar' : 'crear'} el producto: ` + (error.response?.data?.error || error.message));
+      const errores = error.response?.data?.errors;
+      const detalle = errores
+        ? Object.values(errores).flat().join('\n')
+        : (error.response?.data?.msg || error.response?.data?.error || error.response?.data?.message || error.message);
+      alert(`Error al ${editingId ? 'actualizar' : 'crear'} el producto:\n` + detalle);
     }
   };
 
@@ -390,7 +397,7 @@ const Productos = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Precio Compra S/</label>
-                    <input type="number" step="0.01" value={formData.precio_compra} onChange={(e) => setFormData({ ...formData, precio_compra: parseFloat(e.target.value) })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input type="number" step="0.01" value={formData.precio_compra} onChange={(e) => setFormData({ ...formData, precio_compra: e.target.value })} placeholder="0.00" className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Precio Venta S/ *</label>
@@ -480,25 +487,6 @@ const Productos = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Image Modal */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
-          <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
-            >
-              <X size={32} />
-            </button>
-            <img 
-              src={`${SERVER_URL}/images/${selectedImage}`} 
-              alt="Producto" 
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            />
           </div>
         </div>
       )}

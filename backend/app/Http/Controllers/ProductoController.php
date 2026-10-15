@@ -25,25 +25,13 @@ class ProductoController extends Controller
     {
         $this->validate($request, [
             'codigo' => 'required|unique:productos',
-            'descripcion' => 'required',
+            'descripcion' => 'nullable|string',
             'precio_base' => 'required|numeric',
+            'precio_compra' => 'nullable|numeric',
+            'imagen' => 'nullable|image|max:5120',
         ]);
 
-        $data = $request->except('unidades_secundarias');
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $filename = time() . '_img_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->move(base_path('public/uploads/productos'), $filename);
-            $data['imagen'] = 'uploads/productos/' . $filename;
-        }
-
-        if ($request->hasFile('ficha_tecnica')) {
-            $file = $request->file('ficha_tecnica');
-            $filename = time() . '_ficha_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->move(base_path('public/uploads/fichas'), $filename);
-            $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
-        }
+        $data = $this->prepararDatos($request);
 
         DB::beginTransaction();
         try {
@@ -76,21 +64,16 @@ class ProductoController extends Controller
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
-        $data = $request->except('unidades_secundarias');
 
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $filename = time() . '_img_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->move(base_path('public/uploads/productos'), $filename);
-            $data['imagen'] = 'uploads/productos/' . $filename;
-        }
+        $this->validate($request, [
+            'codigo' => 'required|unique:productos,codigo,' . $producto->id,
+            'descripcion' => 'nullable|string',
+            'precio_base' => 'required|numeric',
+            'precio_compra' => 'nullable|numeric',
+            'imagen' => 'nullable|image|max:5120',
+        ]);
 
-        if ($request->hasFile('ficha_tecnica')) {
-            $file = $request->file('ficha_tecnica');
-            $filename = time() . '_ficha_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->move(base_path('public/uploads/fichas'), $filename);
-            $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
-        }
+        $data = $this->prepararDatos($request);
 
         DB::beginTransaction();
         try {
@@ -122,6 +105,37 @@ class ProductoController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Error al actualizar producto', 'msg' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Normaliza los campos del formulario y guarda los archivos adjuntos.
+     * La imagen se guarda en public/images/products y se registra solo el nombre del archivo,
+     * que es como el frontend la muestra (SERVER_URL/images/products/{imagen}).
+     */
+    private function prepararDatos(Request $request): array
+    {
+        $data = $request->except(['unidades_secundarias', 'imagen', 'ficha_tecnica', '_method']);
+
+        $data['descripcion'] = $request->input('descripcion') ?? '';
+
+        $precioCompra = $request->input('precio_compra');
+        $data['precio_compra'] = is_numeric($precioCompra) ? $precioCompra : 0;
+
+        if ($request->hasFile('imagen') && $request->file('imagen')->isValid()) {
+            $file = $request->file('imagen');
+            $filename = time() . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+            $file->move(public_path('images/products'), $filename);
+            $data['imagen'] = $filename;
+        }
+
+        if ($request->hasFile('ficha_tecnica') && $request->file('ficha_tecnica')->isValid()) {
+            $file = $request->file('ficha_tecnica');
+            $filename = time() . '_ficha_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+            $file->move(public_path('uploads/fichas'), $filename);
+            $data['ficha_tecnica'] = 'uploads/fichas/' . $filename;
+        }
+
+        return $data;
     }
 
     public function destroy($id)
