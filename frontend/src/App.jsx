@@ -18,6 +18,7 @@ import Compras from './pages/Compras';
 import NuevaCompra from './pages/NuevaCompra';
 import Inventario from './pages/Inventario';
 import Proveedores from './pages/Proveedores';
+import Marcas from './pages/Marcas';
 import Guias from './pages/Guias';
 import NuevaGuia from './pages/NuevaGuia';
 import EditarGuia from './pages/EditarGuia';
@@ -52,6 +53,7 @@ function App() {
           <Route path="/productos" element={<Productos />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/proveedores" element={<Proveedores />} />
+          <Route path="/marcas" element={<Marcas />} />
           <Route path="/cotizaciones" element={<Cotizaciones />} />
           <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
           <Route path="/cotizaciones/editar/:id" element={<NuevaCotizacion />} />

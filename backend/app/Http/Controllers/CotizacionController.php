@@ -48,6 +48,7 @@ class CotizacionController extends Controller
                 'fecha_vencimiento' => $request->fecha_vencimiento,
                 'base_imponible' => $request->base_imponible,
                 'igv' => $request->igv,
+                'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                 'total' => $request->total,
                 'estado' => 'Pendiente',
                 'terminos_condiciones' => $request->terminos_condiciones
@@ -96,6 +97,7 @@ class CotizacionController extends Controller
                 'fecha_vencimiento' => $request->fecha_vencimiento,
                 'base_imponible' => $request->base_imponible,
                 'igv' => $request->igv,
+                'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                 'total' => $request->total,
                 'terminos_condiciones' => $request->terminos_condiciones
             ]);

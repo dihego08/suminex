@@ -152,7 +152,8 @@ const Productos = () => {
 
   const filteredProductos = productos.filter(p =>
     (p.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.codigo || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (p.codigo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -212,8 +213,8 @@ const Productos = () => {
                     <tr key={producto.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="p-4">
                         {producto.imagen ? (
-                          <img 
-                            src={`${SERVER_URL}/images/products/${producto.imagen}`} 
+                          <img
+                            src={`${SERVER_URL}/images/products/${producto.imagen}`}
                             alt={producto.nombre}
                             className="w-10 h-10 object-cover rounded shadow-sm border border-gray-200 cursor-pointer hover:scale-105 transition-transform"
                             onClick={() => setSelectedImage(producto.imagen)}
@@ -252,9 +253,9 @@ const Productos = () => {
                       <td className="p-4">
                         <div className="flex justify-center gap-3">
                           {producto.ficha_tecnica && (
-                            <a 
-                              href={`${SERVER_URL}/${producto.ficha_tecnica}`} 
-                              target="_blank" 
+                            <a
+                              href={`${SERVER_URL}/${producto.ficha_tecnica}`}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                               title="Descargar Ficha Técnica"
@@ -501,9 +502,9 @@ const Productos = () => {
             >
               <X size={32} />
             </button>
-            <img 
-              src={`${SERVER_URL}/images/products/${selectedImage}`} 
-              alt="Producto" 
+            <img
+              src={`${SERVER_URL}/images/products/${selectedImage}`}
+              alt="Producto"
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
             />
           </div>

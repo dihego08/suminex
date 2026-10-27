@@ -108,9 +108,9 @@ const CotizacionPrint = () => {
             <p>Contacto: 929 288 621 / 973 411 490 / 920 870 534</p>
           </div>
           <div className="w-1/2 flex flex-col items-end">
-            <div className="w-full flex justify-between mb-1"><span className="font-bold">TOTAL (incl. IGV):</span> <span>{parseFloat(cotizacion.total).toFixed(2)}</span></div>
+            <div className="w-full flex justify-between mb-1"><span className="font-bold">{cotizacion.aplica_igv == 0 ? 'TOTAL (sin IGV):' : 'TOTAL (incl. IGV):'}</span> <span>{parseFloat(cotizacion.total).toFixed(2)}</span></div>
             <div className="w-full flex justify-between mb-1"><span className="font-bold">Base Imponible:</span> <span>{parseFloat(cotizacion.base_imponible).toFixed(2)}</span></div>
-            <div className="w-full flex justify-between mb-2"><span className="font-bold">IGV (18%):</span> <span>{parseFloat(cotizacion.igv).toFixed(2)}</span></div>
+            <div className="w-full flex justify-between mb-2"><span className="font-bold">{cotizacion.aplica_igv == 0 ? 'IGV (no aplica):' : 'IGV (18%):'}</span> <span>{parseFloat(cotizacion.igv).toFixed(2)}</span></div>
 
             <div className="w-full bg-[#3b4b6b] text-white p-2 flex justify-between items-center font-bold">
               <span>TOTAL:</span>

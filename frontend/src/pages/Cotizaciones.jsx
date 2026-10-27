@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Search, FileText, Printer, CheckCircle, Edit, Trash2, Download, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { API_URL } from '../config';
+import { API_URL, SERVER_URL } from '../config';
 
 const Cotizaciones = () => {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -99,47 +99,47 @@ const Cotizaciones = () => {
                     const primerImagen = primerDetalle?.producto?.imagen;
 
                     return (
-                    <tr key={cot.id} className={`transition-colors ${cot.estado === 'Aprobada' ? 'bg-green-50/50 hover:bg-green-50' : 'hover:bg-gray-50/50'}`}>
-                      <td className="p-4 text-center">
-                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 mx-auto shadow-sm">
-                          {primerImagen ? (
-                            <img src={primerImagen} alt="Primer producto" className="w-full h-full object-cover" />
-                          ) : (
-                            <ImageIcon size={16} className="text-gray-300" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 font-medium text-gray-900">{cot.numero}</td>
-                      <td className="p-4 text-gray-600">{cot.fecha}</td>
-                      <td className="p-4 text-gray-800">{cot.cliente ? cot.cliente.razon_social : 'Cliente no encontrado'}</td>
-                      <td className="p-4 font-semibold text-gray-900">S/ {cot.total}</td>
-                      <td className="p-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cot.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
+                      <tr key={cot.id} className={`transition-colors ${cot.estado === 'Aprobada' ? 'bg-green-50/50 hover:bg-green-50' : 'hover:bg-gray-50/50'}`}>
+                        <td className="p-4 text-center">
+                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 mx-auto shadow-sm">
+                            {primerImagen ? (
+                              <img src={`${SERVER_URL}/images/products/${primerImagen}`} alt="Primer producto" className="w-full h-full object-cover" />
+                            ) : (
+                              <ImageIcon size={16} className="text-gray-300" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 font-medium text-gray-900">{cot.numero}</td>
+                        <td className="p-4 text-gray-600">{cot.fecha}</td>
+                        <td className="p-4 text-gray-800">{cot.cliente ? cot.cliente.razon_social : 'Cliente no encontrado'}</td>
+                        <td className="p-4 font-semibold text-gray-900">S/ {cot.total}</td>
+                        <td className="p-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cot.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
                             cot.estado === 'Rechazada' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
-                          }`}>
-                          {cot.estado}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-center gap-2">
-                          <Link to={`/cotizaciones/editar/${cot.id}`} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Cotización">
-                            <Edit size={18} />
-                          </Link>
-                          {cot.estado === 'Pendiente' && (
-                            <button onClick={() => generarOrden(cot.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Mandar a Orden de Pedido">
-                              <CheckCircle size={18} />
+                            }`}>
+                            {cot.estado}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-center gap-2">
+                            <Link to={`/cotizaciones/editar/${cot.id}`} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Cotización">
+                              <Edit size={18} />
+                            </Link>
+                            {cot.estado === 'Pendiente' && (
+                              <button onClick={() => generarOrden(cot.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" title="Mandar a Orden de Pedido">
+                                <CheckCircle size={18} />
+                              </button>
+                            )}
+                            <Link to={`/cotizaciones/${cot.id}/imprimir`} className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors" title="Descargar / Imprimir">
+                              <Download size={18} />
+                            </Link>
+                            <button onClick={() => eliminarCotizacion(cot.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Eliminar Cotización">
+                              <Trash2 size={18} />
                             </button>
-                          )}
-                          <Link to={`/cotizaciones/${cot.id}/imprimir`} className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors" title="Descargar / Imprimir">
-                            <Download size={18} />
-                          </Link>
-                          <button onClick={() => eliminarCotizacion(cot.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Eliminar Cotización">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })
                 )}

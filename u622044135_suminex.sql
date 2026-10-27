@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 02-10-2026 a las 16:11:30
+-- Tiempo de generación: 27-10-2026 a las 12:54:59
 -- Versión del servidor: 11.8.9-MariaDB-log
 -- Versión de PHP: 7.2.34
 
@@ -759,6 +759,51 @@ INSERT INTO `afps` (`id`, `afp`, `id_sistema_pensiones`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `app_menus`
+--
+
+CREATE TABLE `app_menus` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `parent_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `label` varchar(120) NOT NULL,
+  `route` varchar(255) DEFAULT NULL COMMENT 'Ruta React; null = solo agrupador',
+  `icon` varchar(100) DEFAULT NULL,
+  `sort_order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `module_key` varchar(80) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `app_menus`
+--
+
+INSERT INTO `app_menus` (`id`, `parent_id`, `label`, `route`, `icon`, `sort_order`, `module_key`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 0, 'Dashboard', '/', 'fa fa-home', 1, NULL, 1, NULL, NULL),
+(122, 0, 'Administración', NULL, 'fa fa-cog', 10, 'grp_admin', 1, '2026-08-05 21:54:47', '2026-08-05 21:54:47'),
+(125, 122, 'Accesos', '/permissions', 'fa fa-lock', 3, 'permissions', 1, '2026-08-05 21:54:48', '2026-08-05 21:54:48'),
+(126, 0, 'Catálogos', NULL, 'fa fa-folder-open', 20, 'grp_catalog', 1, '2026-08-05 21:54:48', '2026-08-05 21:54:48'),
+(127, 126, 'Clientes', '/clientes', 'fa fa-user', 1, 'clients', 1, '2026-08-05 21:54:48', '2026-08-05 21:54:48'),
+(128, 126, 'Productos', '/productos', 'fa fa-cube', 2, 'products', 1, '2026-08-05 21:54:48', '2026-08-05 21:54:48'),
+(130, 126, 'Marcas', '/marcas', 'fa fa-tags', 4, 'brands', 1, '2026-10-27 12:46:10', '2026-10-27 12:46:10'),
+(139, 0, 'Transacciones', NULL, 'fa fa-exchange', 40, 'grp_transactions', 1, '2026-08-05 21:54:51', '2026-08-05 21:54:51'),
+(140, 139, 'Ventas', '/ventas', 'fa fa-list-alt', 1, 'sells', 1, '2026-08-05 21:54:51', '2026-08-05 21:54:51'),
+(141, 139, 'Nueva Venta', '/ventas/nueva', 'fa fa-plus', 2, 'sells_new', 1, '2026-08-05 21:54:51', '2026-08-05 21:54:51'),
+(143, 139, 'Pedidos', '/ordenes', 'fa fa-clipboard', 4, 'orders', 1, '2026-08-05 21:54:51', '2026-08-05 21:54:51'),
+(144, 139, 'Nuevo Pedido', '/ordenes/nueva', 'fa fa-plus-square', 5, 'orders_new', 1, '2026-08-05 21:54:52', '2026-08-05 21:54:52'),
+(145, 139, 'Cotizaciones', '/cotizaciones', 'fa fa-file-o', 6, 'cotizations', 1, '2026-08-05 21:54:52', '2026-08-05 21:54:52'),
+(146, 139, 'Nueva Cotización', '/cotizaciones/nueva', 'fa fa-plus', 7, 'cotizations_new', 1, '2026-08-05 21:54:52', '2026-08-05 21:54:52'),
+(172, 126, 'Precios Especiales', '/precios-cliente', 'fa fa-tags', 3, NULL, 1, NULL, NULL),
+(173, 126, 'Proveedores', '/proveedores', 'fa fa-truck', 4, 'providers', 1, '2026-10-04 12:50:44', '2026-10-04 12:50:44'),
+(174, 139, 'Compras', '/compras', 'fa fa-shopping-bag', 8, 'compras', 1, '2026-10-04 12:51:37', '2026-10-04 12:51:37'),
+(175, 139, 'Nueva Compra', '/compras/nueva', 'fa fa-plus-circle', 9, 'compras_nueva', 1, '2026-10-04 12:51:39', '2026-10-04 12:51:39'),
+(176, 139, 'Kardex / Inventario', '/inventario', 'fa fa-cubes', 10, 'inventario', 1, '2026-10-04 12:51:40', '2026-10-04 12:51:40'),
+(177, 0, 'Guías de Remisión', '/guias', 'fa-truck', 50, NULL, 1, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `aptitud`
 --
 
@@ -1028,6 +1073,30 @@ INSERT INTO `brand` (`id`, `image`, `name`, `description`, `created_at`) VALUES
 (18, NULL, 'CROSSMAN ', NULL, '2026-09-22 13:37:21'),
 (19, NULL, 'TOPTUL', NULL, '2026-09-22 13:38:51'),
 (20, NULL, 'GERMANY', NULL, '2026-09-22 13:38:59');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cache`
+--
+
+CREATE TABLE `cache` (
+  `key` varchar(255) NOT NULL,
+  `value` mediumtext NOT NULL,
+  `expiration` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cache_locks`
+--
+
+CREATE TABLE `cache_locks` (
+  `key` varchar(255) NOT NULL,
+  `owner` varchar(255) NOT NULL,
+  `expiration` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -3987,6 +4056,53 @@ CREATE TABLE `clases` (
 
 INSERT INTO `clases` (`id`, `codigo`, `descripcion`) VALUES
 (1, '01', 'Bateria para radio portatil');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `clientes`
+--
+
+CREATE TABLE `clientes` (
+  `id` int(11) NOT NULL,
+  `razon_social` varchar(255) NOT NULL,
+  `ruc` varchar(20) NOT NULL,
+  `direccion` varchar(255) DEFAULT NULL,
+  `telefono` varchar(50) DEFAULT NULL,
+  `whatsapp` varchar(255) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `tipo_pago` int(11) NOT NULL DEFAULT 0,
+  `banco` varchar(255) DEFAULT NULL,
+  `nro_cuenta` varchar(255) DEFAULT NULL,
+  `tiene_credito` tinyint(1) NOT NULL DEFAULT 0,
+  `limite_credito` decimal(10,2) DEFAULT NULL,
+  `estado` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `clientes`
+--
+
+INSERT INTO `clientes` (`id`, `razon_social`, `ruc`, `direccion`, `telefono`, `whatsapp`, `email`, `tipo_pago`, `banco`, `nro_cuenta`, `tiene_credito`, `limite_credito`, `estado`, `created_at`, `updated_at`) VALUES
+(361, 'IMPORTACIONES VOLKAN S.A.C.', '20614174898', 'PJ. SANTA CATALINA INT. 1-2 MZA. E LOTE 100 URB. CENTRO COMERCIAL ', 'segurindustria.volkan@gmail.com', '934 880 854', '', 1, 'BCP', '2157134557047', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(362, 'INVERSIONES MARITIMAS DEL PACIFICO SUR S.A.C.', '20507102469', 'NRO -- P.R. VISTA ALEGRE U.C. 08 ', '', '', '', 1, 'INTERBANK', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(363, 'INMARPACS SHIPPING S.A.C.', '20610383077', 'NRO 1180 OTR. AV DEL EJERCITO ', '', '', '', 1, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(364, 'MC CENTURION S.A.C.', '20614966051', 'AV. BUENAVISTA NRO 155 DEP. 103 URB. CHACARILLA DEL ESTANQUE ', '', '', '', 1, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(365, 'MENDOZA YUCRA GABRIEL MISAEL', '10723527398', '-', '', '', '', 1, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(366, 'RIO BLANCO MAQUINARIAS S.A.C.', '20558608235', 'MZA. D LOTE 10 COO. LA CANTUTA ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(367, 'D & P STEEL MASTERS E.I.R.L.', '20456238409', 'MZA. A LOTE 10 ASC. URBANIZADORA PERUARBO ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(368, 'PERUVIAN DRESS TPX S.A.C.', '20455175781', 'CAL. BELEN MZA. B LOTE 8 URB. JERUSALEN ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(369, 'JORTUCO E.I.R.L.', '20608796071', 'AV. AVIACION MZA. B LOTE 20 RES. EL CORTIJO KM. 7 ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(370, 'DE LA CRUZ ALBARRACIN JORGE ALEJANDRO', '10428602825', '-', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(371, 'PROMOTORA CULTURAL SAN JOSE DE MAYO S.R.L.', '20456050434', 'CAL. PALACIO VIEJO NRO 304 ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(372, 'INVERSIONES JALISCO S.A.C.', '20455539731', 'MZA. 53 LOTE 6 A.H. MANUEL PRADO ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(373, 'BEA INGENIEROS S.A.C.', '20612028991', 'AV. RIVERA NAVARRETE NRO 395 INT. 1502 ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(375, 'OMCAR SOLUTIONS E.I.R.L.', '20611081651', 'CAL. BELEN NRO 319 URB. JERUSALEN ', NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(377, 'OPERACIONES MINERAS SAN PEDRO SOCIEDAD ANONIMA CERRADA', '20600617045', 'AV. RIVERA NAVARRETE NRO 395 INT. 1502 ', '', '', '', 0, 'BCP', '', 0, 0.00, 0, '2026-10-03 23:59:30', '2026-10-03 23:59:30'),
+(378, 'ARANIBAR RAMOS DIEGO ENGELBERT', '10713344112', '-', '', NULL, '', 0, NULL, NULL, 0, NULL, 1, '2026-10-04 00:56:56', '2026-10-04 00:56:56'),
+(379, 'KOREX S.A.C.', '20616596935', 'MZA. J LOTE. 5 URB. BALCONES DE CHILINA AREQUIPA - AREQUIPA - ALTO SELVA ALEGRE', '973411490', NULL, NULL, 1, 'BCP', NULL, 0, NULL, 1, '2026-10-26 16:48:54', '2026-10-26 16:48:54');
 
 -- --------------------------------------------------------
 
@@ -7324,6 +7440,35 @@ INSERT INTO `cotizacion` (`codigo`, `fecha_creacion`, `tiempo_entrega`, `obervac
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `cotizaciones`
+--
+
+CREATE TABLE `cotizaciones` (
+  `id` int(11) NOT NULL,
+  `numero` varchar(20) NOT NULL,
+  `id_cliente` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `fecha_vencimiento` date NOT NULL,
+  `base_imponible` decimal(10,2) NOT NULL,
+  `igv` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `estado` enum('Pendiente','Aprobada','Rechazada') DEFAULT 'Pendiente',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `terminos_condiciones` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `cotizaciones`
+--
+
+INSERT INTO `cotizaciones` (`id`, `numero`, `id_cliente`, `fecha`, `fecha_vencimiento`, `base_imponible`, `igv`, `total`, `estado`, `created_at`, `updated_at`, `terminos_condiciones`) VALUES
+(1, 'COT-100', 361, '2026-10-04', '2026-10-11', 15.00, 2.70, 17.70, 'Pendiente', '2026-10-04 00:17:52', '2026-10-04 00:17:52', 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'),
+(2, 'COT-101', 379, '2026-10-26', '2026-11-02', 3.13, 0.56, 3.70, 'Aprobada', '2026-10-26 16:50:19', '2026-10-26 16:50:30', 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `cotizacion_detalle`
 --
 
@@ -7351,6 +7496,30 @@ INSERT INTO `cotizacion_detalle` (`id`, `codigo_cotizacion`, `id_producto`, `can
 (3, '209', 334, 0, '', '', '8.051', 'GUANTES DE CUERO', NULL, 'GUANTES DE CUERO', '2026-09-29 01:54:05'),
 (4, '209', 370, 0, '', '', '2.5', '', NULL, 'GUANTES QUIRURGICOS DESCARTABLES', '2026-09-29 01:54:05'),
 (5, '209', 405, 0, '', '', '6.5', '', NULL, 'GUANTE DE CUERO BADANA AMARILLO', '2026-09-29 01:54:05');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cotizacion_detalles`
+--
+
+CREATE TABLE `cotizacion_detalles` (
+  `id` int(11) NOT NULL,
+  `id_cotizacion` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `descripcion_personalizada` varchar(255) DEFAULT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `cotizacion_detalles`
+--
+
+INSERT INTO `cotizacion_detalles` (`id`, `id_cotizacion`, `id_producto`, `descripcion_personalizada`, `cantidad`, `precio_unitario`, `total`) VALUES
+(1, 1, 1, '', 1, 15.00, 15.00),
+(2, 2, 86, NULL, 1, 3.14, 3.14);
 
 -- --------------------------------------------------------
 
@@ -9972,6 +10141,22 @@ INSERT INTO `f` (`id`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `failed_jobs`
+--
+
+CREATE TABLE `failed_jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `connection` varchar(255) NOT NULL,
+  `queue` varchar(255) NOT NULL,
+  `payload` longtext NOT NULL,
+  `exception` longtext NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `familiares`
 --
 
@@ -10296,6 +10481,24 @@ INSERT INTO `formacion` (`id`, `formacion`, `lugar`, `id_colaborador`, `archivo`
 (40, 'Secundria completa', 'Andrea Valdivieso de Melgar', 63, 'ELIZABETH EDUCACION.pdf'),
 (41, 'AUDITOR INTERNO EN LA NORMA ISO 45001:2018', 'Cognitio Consulting S.A.C.', 27, 'CERTIFICADO  CURSO AUDITOR INTERNO ISO 45001 - Ana.pdf'),
 (42, 'EDUCACION BASICA', '', 76, 'LADY EDUCACION.pdf');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `guias_remision`
+--
+
+CREATE TABLE `guias_remision` (
+  `id` int(11) NOT NULL,
+  `id_venta` int(11) NOT NULL,
+  `numero_guia` varchar(50) NOT NULL,
+  `fecha_emision` date NOT NULL,
+  `motivo_traslado` varchar(100) DEFAULT 'Venta',
+  `punto_partida` varchar(255) NOT NULL,
+  `punto_llegada` varchar(255) NOT NULL,
+  `estado` enum('Emitida','Anulada') DEFAULT 'Emitida',
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -10659,6 +10862,41 @@ CREATE TABLE `insumo_stock` (
   `descripcion` varchar(255) DEFAULT NULL,
   `fecha` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `jobs`
+--
+
+CREATE TABLE `jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `queue` varchar(255) NOT NULL,
+  `payload` longtext NOT NULL,
+  `attempts` smallint(5) UNSIGNED NOT NULL,
+  `reserved_at` int(10) UNSIGNED DEFAULT NULL,
+  `available_at` int(10) UNSIGNED NOT NULL,
+  `created_at` int(10) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `job_batches`
+--
+
+CREATE TABLE `job_batches` (
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `total_jobs` int(11) NOT NULL,
+  `pending_jobs` int(11) NOT NULL,
+  `failed_jobs` int(11) NOT NULL,
+  `failed_job_ids` longtext NOT NULL,
+  `options` mediumtext DEFAULT NULL,
+  `cancelled_at` int(11) DEFAULT NULL,
+  `created_at` int(11) NOT NULL,
+  `finished_at` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -22646,7 +22884,7 @@ INSERT INTO `menus` (`id`, `text`, `nivel`, `parent_id`, `link`, `orden`, `icon`
 (96, 'Costos Fijos', 2, 93, './?view=costos_fijos', 3, NULL),
 (97, 'Gastos Adm. y Financieros', 2, 93, './?view=gaf', 4, NULL),
 (98, 'Gastos de Venta y Marketing', 2, 93, './?view=gvm', 5, NULL),
-(99, 'Guías de Remisión', 2, 36, './?view=guias', 1, 'fa fa-usd');
+(99, 'Guías de Remisión', 2, 36, './?view=guias', 1, 'fa fa-truck');
 
 -- --------------------------------------------------------
 
@@ -22998,6 +23236,30 @@ INSERT INTO `message` (`id`, `code`, `message`, `user_from`, `user_to`, `is_read
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `migrations`
+--
+
+CREATE TABLE `migrations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `migration` varchar(255) NOT NULL,
+  `batch` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `migrations`
+--
+
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
+(1, '2026_10_03_230032_add_legacy_fields_to_productos_table', 1),
+(2, '2026_10_03_232253_add_legacy_fields_to_clientes_table', 2),
+(3, '0001_01_01_000000_create_users_table', 3),
+(4, '0001_01_01_000001_create_cache_table', 3),
+(5, '0001_01_01_000002_create_jobs_table', 3),
+(6, '2026_10_08_011853_create_personal_access_tokens_table', 3);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `modificaciones`
 --
 
@@ -23148,7 +23410,9 @@ INSERT INTO `operation` (`id`, `product_id`, `stock_id`, `stock_destination_id`,
 (29, 17, 1, NULL, NULL, 120, 22, 0, 2, NULL, 1, 0, 0, '2020-11-21 16:59:15'),
 (30, 12, 1, NULL, NULL, 1010, 9.2, 0, 1, NULL, 1, 0, 0, '2020-11-21 17:00:36'),
 (32, 50, 1, NULL, NULL, 10, 6.5, 0, 1, NULL, 1, 0, 0, '2020-12-18 05:48:53'),
-(33, 50, 1, NULL, NULL, 15, 6.5, 0, 2, NULL, 1, 0, 0, '2020-12-18 05:49:09');
+(33, 50, 1, NULL, NULL, 15, 6.5, 0, 2, NULL, 1, 0, 0, '2020-12-18 05:49:09'),
+(34, 3, 1, NULL, NULL, 50, 7.5, 0, 1, NULL, 1, 0, 0, '2026-10-04 12:55:50'),
+(35, 3, 1, NULL, NULL, 50, 0, 7.5, 2, NULL, 1, 0, 0, '2026-10-04 12:56:16');
 
 -- --------------------------------------------------------
 
@@ -23187,6 +23451,59 @@ CREATE TABLE `opiniones` (
   `fecha` timestamp NOT NULL DEFAULT current_timestamp(),
   `estado` int(11) NOT NULL DEFAULT 3
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ordenes_pedido`
+--
+
+CREATE TABLE `ordenes_pedido` (
+  `id` int(11) NOT NULL,
+  `numero` varchar(50) DEFAULT NULL,
+  `id_cliente` int(11) DEFAULT NULL,
+  `id_cotizacion` int(11) DEFAULT NULL,
+  `fecha` date NOT NULL,
+  `estado` enum('Pendiente','Facturada','Anulada') DEFAULT 'Pendiente',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `base_imponible` decimal(10,2) DEFAULT NULL,
+  `igv` decimal(10,2) DEFAULT NULL,
+  `total` decimal(10,2) DEFAULT NULL,
+  `terminos_condiciones` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `ordenes_pedido`
+--
+
+INSERT INTO `ordenes_pedido` (`id`, `numero`, `id_cliente`, `id_cotizacion`, `fecha`, `estado`, `created_at`, `updated_at`, `base_imponible`, `igv`, `total`, `terminos_condiciones`) VALUES
+(1, 'ORD-100', 379, 2, '2026-10-26', 'Pendiente', '2026-10-26 16:50:30', '2026-10-26 16:50:30', 3.13, 0.56, 3.70, 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ordenes_pedido_detalles`
+--
+
+CREATE TABLE `ordenes_pedido_detalles` (
+  `id` int(11) NOT NULL,
+  `id_orden_pedido` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `descripcion_personalizada` text DEFAULT NULL,
+  `cantidad` decimal(10,2) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `ordenes_pedido_detalles`
+--
+
+INSERT INTO `ordenes_pedido_detalles` (`id`, `id_orden_pedido`, `id_producto`, `descripcion_personalizada`, `cantidad`, `precio_unitario`, `total`, `created_at`, `updated_at`) VALUES
+(1, 1, 86, NULL, 1.00, 3.14, 3.14, '2026-10-26 16:50:30', '2026-10-26 16:50:30');
 
 -- --------------------------------------------------------
 
@@ -24401,6 +24718,18 @@ INSERT INTO `pasos` (`id`, `id_etapa`, `paso`, `instruccion`, `code_producto`, `
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `payment`
 --
 
@@ -24584,6 +24913,25 @@ INSERT INTO `person` (`id`, `image`, `no`, `name`, `lastname`, `company`, `addre
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `personal_access_tokens`
+--
+
+CREATE TABLE `personal_access_tokens` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `tokenable_type` varchar(255) NOT NULL,
+  `tokenable_id` bigint(20) UNSIGNED NOT NULL,
+  `name` text NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `abilities` text DEFAULT NULL,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `precios`
 --
 
@@ -24601,6 +24949,27 @@ CREATE TABLE `precios` (
 
 INSERT INTO `precios` (`id`, `id_producto`, `precio`, `descripcion`, `id_person`) VALUES
 (1, 4, 10.00, 'Talla S', 4);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `precios_cliente`
+--
+
+CREATE TABLE `precios_cliente` (
+  `id` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `id_cliente` int(11) NOT NULL,
+  `unidad_medida` varchar(20) DEFAULT NULL,
+  `precio_personalizado` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `precios_cliente`
+--
+
+INSERT INTO `precios_cliente` (`id`, `id_producto`, `id_cliente`, `unidad_medida`, `precio_personalizado`) VALUES
+(2, 1, 373, 'BX', 640.00);
 
 -- --------------------------------------------------------
 
@@ -24833,6 +25202,173 @@ INSERT INTO `product` (`id`, `image`, `code`, `barcode`, `name`, `description`, 
 (414, '', '', '', 'PALA ANTICHISPAS', '', 10, 130, 130, 0, 'UND', '', 1, NULL, NULL, '', '', '', '', NULL, '2026-10-01 14:55:30', 1, 1, 0, '', 0, 0, '2026-10-01', NULL, ''),
 (415, '', '', '', 'PREFILTRO 5N11 3M', '', 10, 105, 105, 0, 'UND', '', 27, NULL, NULL, '', '', '', '', NULL, '2026-10-01 22:47:42', 1, 1, 0, '', 0, 0, '2026-10-01', NULL, ''),
 (416, '', '', '', 'FILTRO 6003 3M', '', 10, 41, 41, 0, '', '', 27, NULL, NULL, '', '', '', '', NULL, '2026-10-01 22:49:33', 1, 1, 0, '', 0, 0, '2026-10-01', NULL, '');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `productos`
+--
+
+CREATE TABLE `productos` (
+  `id` int(11) NOT NULL,
+  `tipo` int(11) NOT NULL DEFAULT 1,
+  `codigo` varchar(50) NOT NULL,
+  `codigo_barras` varchar(255) DEFAULT NULL,
+  `nombre` varchar(255) DEFAULT NULL,
+  `descripcion` text NOT NULL,
+  `precio_base` decimal(10,2) NOT NULL,
+  `stock` int(11) NOT NULL DEFAULT 0,
+  `unidad_medida` varchar(20) DEFAULT 'UND',
+  `estado` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `presentacion` varchar(255) DEFAULT NULL,
+  `largo` varchar(255) DEFAULT NULL,
+  `ancho` varchar(255) DEFAULT NULL,
+  `alto` varchar(255) DEFAULT NULL,
+  `peso` varchar(255) DEFAULT NULL,
+  `stock_minimo` int(11) NOT NULL DEFAULT 10,
+  `precio_compra` decimal(10,2) DEFAULT NULL,
+  `fecha_actualizacion` date DEFAULT NULL,
+  `marca` varchar(255) DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
+  `ficha_tecnica` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `productos`
+--
+
+INSERT INTO `productos` (`id`, `tipo`, `codigo`, `codigo_barras`, `nombre`, `descripcion`, `precio_base`, `stock`, `unidad_medida`, `estado`, `created_at`, `updated_at`, `presentacion`, `largo`, `ancho`, `alto`, `peso`, `stock_minimo`, `precio_compra`, `fecha_actualizacion`, `marca`, `imagen`, `ficha_tecnica`) VALUES
+(1, 1, 'TEST', '-', 'BOTA RGB SEGUSA ', 'TEST', 100.00, 0, 'PR', 1, '2026-09-07 22:16:02', '2026-10-08 01:36:58', '', '', '', '', '', 10, 105.09, NULL, NULL, NULL, NULL),
+(2, 1, 'PMNN4477A', '', 'BATERIA PARA RADIO HANDY TALKABOUT SERIE “T”', 'Esta batería recargable tipo Ni-MH de 3.6V / 800mAh es compatible con los modelos:\r\nT200 / T260 / T265 / T280 / T289\r\nT300 / T400 / T460 / T465 / T480 / T600 / T605\r\nY otros que utilicen batería PMNN4477A.', 285.00, 0, 'UNIDAD', 1, '2026-09-08 04:18:22', '2026-10-04 13:41:25', 'Sellada en un blíster plástico transparente', '50 mm', '43 mm', '14 mm', '58g', 10, 280.00, NULL, 'MOTOROLA', 'BATERIA_PARA_RADIO_PORTATIL_TALKABOUT.jpg', NULL),
+(3, 1, 'GEN-340', '', 'PINTURA SPRAY # 32 - CELESTE', ' Pintura en spray de secado rápido, brinda excelente recubrimiento a las superficies pintadas por su alta densidad, cubriendo mas con menos pasadas, cumple la Normativa Internacional RoHS que prohíbe el uso de sustancias peligrosas (Plomo) en sus productos. ', 9.00, 0, 'UNIDAD', 1, '2026-09-08 04:31:33', '2026-10-04 13:41:26', 'Aerosol metálico cilíndrico de alta densidad.', '', '6.5 cm', '20 cm', '360 G', 10, 7.50, '2026-10-04', 'C&A', 'Pintura_en_spray_celeste_cielo_CYA.jpg', NULL),
+(4, 1, 'GEN-341', '', 'PINTURA SPRAY #48 - VERDE OSCURO', 'Pintura en spray de secado rápido, brinda excelente recubrimiento a las superficies pintadas por su alta densidad, cubriendo mas con menos pasadas, cumple la Normativa Internacional RoHS que prohíbe el uso de sustancias peligrosas (Plomo) en sus productos. ', 9.00, 0, 'UNIDAD', 1, '2026-09-08 04:35:57', '2026-10-04 13:41:26', 'Aerosol metálico cilíndrico de alta densidad.', '', '6.5 cm', '20 cm', '360 G', 10, 7.00, NULL, 'C&A', 'Pintura_en_Spray_Verde_oscuro_CA_1.jpg', NULL),
+(5, 1, 'CHALECO', '', 'CHALECOS DE SEGURIDAD COLOR TURQUESA', 'El chaleco de seguridad color turquesa es una prenda de protección personal e identificación operativa, diseñada para destacar visualmente en entornos de trabajo, eventos o brigadas específicas que requieren diferenciación de personal.', 35.00, 0, 'UNIDAD', 1, '2026-09-08 04:42:26', '2026-10-04 13:41:26', 'Bolsa de polietileno transparente', '', '', '', '', 10, 31.00, NULL, 'NACIONAL', 'Chaleco_de_seguridad_Turquesa.jpg', NULL),
+(6, 1, '20121101', '', 'PISTOLA CLASSIC LUX SUCCIÓN BOQ. 1.6', 'Herramienta de pintado industrial con sistema convencional de muy bajo consumo de aire. Cuenta con un depósito o vaso de aluminio de succión de 1 litro equipado con anclaje por brida, tapa antigoteo y junta de cierre. Incluye reguladores incorporados para controlar el abanico, la cantidad de pintura y el caudal de aire.', 400.00, 0, 'UNIDAD', 1, '2026-09-08 04:51:50', '2026-10-04 13:41:26', 'CAJA', '', '', '', '870 G', 10, 398.00, NULL, 'SAGOLA', 'PISTOLA_PARA_PINTAR_CLASSIC_LUX_SAGOLA.jpg', NULL),
+(7, 1, 'GEN-344', '', 'PINTURA GLOSS X3', 'Producto versátil elaborado con resina de copolimero hidroxilado, pigmentos orgánicos e inorgánicos, que al ser aplicadas hacen de este producto ideal para la línea automotriz, proporcionando películas de alto micraje .\r\nTiene incorporado en su formulación aditivos UV (ultra violeta), los cuales otorgan mayor resistencia a los rayos solares e intemperie.', 76.00, 0, 'UNIDAD', 1, '2026-09-08 05:00:06', '2026-10-04 13:41:26', 'Balde de 1 galon', '', '', '', '4.4 kg', 10, 73.00, NULL, 'ANYPSA', 'PINTURA_GLOSS.jpg', NULL),
+(8, 1, 'GEN-345', '', 'THINER ACRILICO', 'El thinner acrílico maestrazo Anypsa es un disolvente de alto rendimiento, ideal para diluir pinturas acrílicas y limpiar herramientas. Asegura una aplicación uniforme, rápida evaporación y un acabado de calidad profesional.', 19.50, 0, 'UNIDAD', 1, '2026-09-08 05:05:10', '2026-10-04 13:41:27', 'Botella de 1 litro (900ml)', '', '', '', '0.83 KG', 10, 19.00, NULL, 'ANYPSA', 'THINER.jpg', NULL),
+(9, 1, 'GEN-346', '', 'BASE ZINCROMATO MAESTRO', 'La base zincromato Anypsa es un primer anticorrosivo ideal para superficies metálicas. Ofrece excelente adherencia, resistencia al óxido y sirve como fondo para esmaltes sintéticos y poliuretánicos.', 48.00, 0, 'UNIDAD', 1, '2026-09-08 05:10:14', '2026-10-04 13:41:27', 'Balde de 1 galon', '', '', '', '4.8KG', 10, 43.00, NULL, 'ANYPSA', 'BASE_ZINCROMATO.jpg', NULL),
+(10, 1, 'GEN-347', '', 'POLO PIQUE ALGODÓN CON DOBLE CINTA REFLECTIVA  3M', 'Polo Piqué 100% Algodón de alta resistencia con cinta reflectiva de 2” (marca 3M) en pecho y espalda para máxima visibilidad en zonas de trabajo. Diseñado con bordado personalizado de alta calidad, cuello piqué reforzado y costuras dobles para garantizar durabilidad, frescura y protección visual en campo o plantas industriales.', 52.00, 0, 'UNIDAD', 1, '2026-09-08 05:14:25', '2026-10-04 13:41:27', 'Bolsa de polietileno transparente', '', '', '', '0.22 KG', 10, 50.00, NULL, 'NACIONAL', 'POLO_CON_DOBLE_CINTA_REFLECTIVA.jpg', NULL),
+(11, 1, 'GEN-348', '', 'CONJUNTO DRILL', 'Conjunto industrial de camisa y pantalón en tela drill de alta durabilidad, diseñado para trabajo operativo en condiciones exigentes. Ofrece alta resistencia al desgaste, comodidad y visibilidad en campo gracias a sus cintas reflectivas incorporadas.', 85.00, 0, 'UNIDAD', 1, '2026-09-08 05:17:18', '2026-10-04 13:41:27', 'suelto', '', '', '', '1.2 KG', 10, 83.50, NULL, 'NACIONAL', 'CONJUNTO_DRILL.jpg', NULL),
+(12, 1, 'SS04-525 AQUILES', '', 'BOTÍN DE SEGURIDAD ACERO – AQUILES', 'Calzado de seguridad fabricado con el sistema de inyección. Capellada de cuero . Suela PU bidensidad. Antideslizante, resistente a la abrasión, grasas e hidrocarburos. Cuenta con plantilla antiperforante de acero.', 135.00, 0, 'Unidades', 1, '2026-09-08 05:24:53', '2026-10-04 13:41:27', 'CAJA', '', '', '', '1.5 KG', 10, 130.00, NULL, 'SANDDER TNT', 'AQUILES.jpg', NULL),
+(13, 1, 'GEN-350', '', 'GUANTES DE NEOPRENO', 'Guante totalmente recubierto con doble capa de PVC\r\nSoporte interno de tejido de hilo enmallado\r\nAcabado aspero que permite mejor manipulación\r\nAplicación en trabajos húmedo o en base aceite\r\nTotalmente impermeable', 26.00, 0, 'UNIDAD', 1, '2026-09-12 15:04:26', '2026-10-04 13:41:28', 'Suelto', '', '', '', '0.300', 10, 24.00, NULL, 'ASTARA', 'GUANTES_NEOPRENO.jpg', NULL),
+(14, 1, 'GEN-351', '', 'BOTIN DIELECTRICO FULL PLUS', '', 90.00, 0, 'PAR', 1, '2026-09-17 19:39:06', '2026-10-04 13:41:28', 'CAJA', '', '', '', '', 10, 85.00, NULL, NULL, 'botin_dielectrico.jpg', NULL),
+(15, 1, 'GEN-352', '', 'CASCO JOCKEY', '', 25.00, 0, 'UND', 1, '2026-09-17 19:43:29', '2026-10-04 13:41:28', 'UND', '', '', '', '', 10, 23.50, NULL, 'TRIDENTE', 'CASCO_TRIDENTE.jpg', NULL),
+(16, 1, '01LAM01', '', 'LAMPARA MINERA 3A', 'El modelo 3A incorpora una batería de ion de litio (Li-ion) de 7.0 Ah y alcanza una potencia luminosa de hasta 12,000 lux, garantizando una visibilidad superior en entornos de baja iluminación', 287.00, 0, 'NIU', 1, '2026-09-17 20:01:01', '2026-10-26 15:54:36', 'CAJA', '', '', '', '', 10, 260.00, '2026-10-26', 'WISDOM', 'LAMPARA_WISDOM.jpg', NULL),
+(17, 2, 'GEN-354', '', 'TRANSPORTE', '', 10.00, 0, 'UND', 1, '2026-09-18 18:25:05', '2026-10-03 23:08:48', '', '', '', '', '', 10, 10.00, NULL, NULL, NULL, NULL),
+(18, 1, 'GEN-355', '', 'PLANCHA METALICA 70X50', '', 60.00, 0, 'UND', 1, '2026-09-18 19:23:07', '2026-10-03 23:08:49', '', '', '', '', '', 10, 60.00, NULL, NULL, NULL, NULL),
+(19, 1, 'GEN-356', '', 'EXTINTOR 2KG', '', 48.00, 0, 'UND', 1, '2026-09-18 20:30:46', '2026-10-03 23:08:49', '', '', '', '', '', 10, 48.00, NULL, NULL, NULL, NULL),
+(20, 1, 'GEN-357', '', 'ADAPTADOR 1/2  CON ENCASTRE DE 3/4 ', '', 70.00, 0, 'UND', 1, '2026-09-22 15:04:54', '2026-10-04 13:41:28', '', '', '', '', '', 10, 70.00, NULL, 'CROSSMAN ', 'ADAPTADOR_2.jpg', NULL),
+(21, 1, 'GEN-358', '', 'PALANCA L DE 3/4 X 18', '', 150.00, 0, 'UND', 1, '2026-09-22 15:08:40', '2026-10-04 13:41:29', '', '', '', '', '', 10, 150.00, NULL, 'TOPTUL', 'PALANCA_L.jpg', NULL),
+(22, 1, 'GEN-359', '', 'LLAVE ALLEN DE 14 MM', '', 42.00, 0, 'UND', 1, '2026-09-22 15:11:09', '2026-10-04 13:41:29', '', '', '', '', '', 10, 42.00, NULL, 'GERMANY', 'LLAVE_ALLEN_DE_14_MM_GERMANY.jpg', NULL),
+(23, 1, 'GEN-360', '', 'LLAVE ALLEN DE 8 MM ', '', 17.00, 0, 'UND', 1, '2026-09-22 15:15:18', '2026-10-04 13:41:29', '', '', '', '', '', 10, 17.00, NULL, 'GERMANY', 'LLAVE_ALLEN_DE_8_MM_GERMANY.jpg', NULL),
+(24, 1, 'GEN-361', '', 'MANUAL DE PRIMEROS AUXILIOS', '', 5.50, 0, 'UND', 1, '2026-09-25 15:59:04', '2026-10-03 23:08:51', '', '', '', '', '0.15', 10, 5.50, NULL, NULL, NULL, NULL),
+(25, 1, 'GEN-362', '', 'FRASCO DE IODOPOVIDONA SOLUCION DE 60 CC', '', 10.50, 0, 'UND', 1, '2026-09-25 15:59:36', '2026-10-03 23:08:52', '', '', '', '', '0.08', 10, 10.50, NULL, NULL, NULL, NULL),
+(26, 1, 'GEN-363', '', 'GASAS ESTERILIZADAS FRACCIONADAS 10 CM X 10 CM', '', 4.00, 0, 'UND', 1, '2026-09-25 16:00:11', '2026-10-03 23:08:52', '', '', '', '', '0.05', 10, 4.00, NULL, NULL, NULL, NULL),
+(27, 1, 'GEN-364', '', 'ESPARADRAPO 2.5 CM X 5 CM', '', 7.30, 0, 'UND', 1, '2026-09-25 16:00:57', '2026-10-03 23:08:52', '', '', '', '', '0.03', 10, 7.30, NULL, NULL, NULL, NULL),
+(28, 1, 'GEN-365', '', 'APOSITO ESTERILIZADO 10 CM X 20 CM', '', 4.50, 0, 'UND', 1, '2026-09-25 16:01:45', '2026-10-03 23:08:53', '', '', '', '', '0.02', 10, 4.50, NULL, NULL, NULL, NULL),
+(29, 1, 'GEN-366', '', 'VENDA ELASTICA 2X5 YARDAS', '', 1.50, 0, 'UND', 1, '2026-09-25 16:05:28', '2026-10-03 23:08:53', '', '', '', '', '0.03', 10, 1.50, NULL, NULL, NULL, NULL),
+(30, 1, 'GEN-367', '', 'VENDA ELASTICA 4X5 YARDAS', '', 2.60, 0, 'UND', 1, '2026-09-25 16:06:12', '2026-10-03 23:08:54', '', '', '', '', '0.05', 10, 2.60, NULL, NULL, NULL, NULL),
+(31, 1, 'GEN-368', '', 'VENDA ELASTICA 8X5 YARDAS', '', 4.20, 0, 'UND', 1, '2026-09-25 16:06:51', '2026-10-03 23:08:54', '', '', '', '', '0.08', 10, 4.20, NULL, NULL, NULL, NULL),
+(32, 1, 'GEN-369', '', 'BANDAS ADHESIVAS', '', 6.50, 0, 'UND', 1, '2026-09-25 16:07:28', '2026-10-03 23:08:54', '', '', '', '', '0.1', 10, 6.50, NULL, NULL, NULL, NULL),
+(33, 1, 'GEN-370', '', 'GUANTES QUIRURGICOS DESCARTABLES', '', 2.50, 0, 'UND', 1, '2026-09-25 16:07:57', '2026-10-03 23:08:55', '', '', '', '', '0.01', 10, 2.50, NULL, NULL, NULL, NULL),
+(34, 1, 'GEN-371', '', 'BOLSO DE BOTIQUIN', '', 17.00, 0, 'UND', 1, '2026-09-25 16:08:20', '2026-10-03 23:08:56', '', '', '', '', '0.3', 10, 17.00, NULL, NULL, NULL, NULL),
+(35, 1, 'GEN-372', '', 'PAÑOS ABSORBENTES PARA HIDROCARBUROS', '', 4.50, 0, 'UND', 1, '2026-09-25 16:08:40', '2026-10-03 23:08:56', '', '', '', '', '0.06', 10, 4.50, NULL, NULL, NULL, NULL),
+(36, 1, 'GEN-373', '', 'BOLSAS PARA RESIDUOS ROJAS', '', 2.00, 0, 'UND', 1, '2026-09-25 16:09:03', '2026-10-03 23:08:56', '', '', '', '', '0.03', 10, 2.00, NULL, NULL, NULL, NULL),
+(37, 1, 'GEN-374', '', 'SALCHICHA ABSORBENTE', '', 14.00, 0, 'UND', 1, '2026-09-25 16:09:32', '2026-10-03 23:08:57', '', '', '', '', '0.8', 10, 14.00, NULL, NULL, NULL, NULL),
+(38, 1, 'GEN-375', '', 'SACOS DE POLIPROPILENO', '', 1.80, 0, 'UND', 1, '2026-09-25 16:10:03', '2026-10-03 23:08:57', '', '', '', '', '0.06', 10, 1.80, NULL, NULL, NULL, NULL),
+(39, 1, 'GEN-376', '', 'TRAPOS INDUSTRIALES', '', 6.00, 0, 'UND', 1, '2026-09-25 16:10:29', '2026-10-03 23:08:57', '', '', '', '', '1', 10, 6.00, NULL, NULL, NULL, NULL),
+(40, 1, 'GEN-377', '', 'CINTA DE SEGURIDAD ROJA', '', 28.00, 0, 'UND', 1, '2026-09-25 16:10:54', '2026-10-03 23:08:58', '', '', '', '', '0.4', 10, 28.00, NULL, NULL, NULL, NULL),
+(41, 1, 'GEN-378', '', 'CINTA DE SEGURIDAD AMARILLA', '', 28.00, 0, 'UND', 1, '2026-09-25 16:11:15', '2026-10-03 23:08:58', '', '', '', '', '0.4', 10, 28.00, NULL, NULL, NULL, NULL),
+(42, 1, 'GEN-379', '', 'BANDEJA ANTIDERRAME ', '', 48.00, 0, 'UND', 1, '2026-09-25 16:11:46', '2026-10-03 23:08:59', '', '', '', '', '1.8', 10, 48.00, NULL, NULL, NULL, NULL),
+(43, 1, 'GEN-380', '', 'MALETIN DE KIT ANTIDERRAME', '', 20.00, 0, 'UND', 1, '2026-09-25 16:12:12', '2026-10-03 23:08:59', '', '', '', '', '0.5', 10, 20.00, NULL, NULL, NULL, NULL),
+(44, 1, 'GEN-381', '', 'EXTINTOR DE 02 KG PQS CON SEGURO', '', 48.00, 0, 'UND', 1, '2026-09-25 16:12:35', '2026-10-03 23:08:59', '', '', '', '', '3.6', 10, 48.00, NULL, NULL, NULL, NULL),
+(45, 1, 'GEN-382', '', 'CONOS DE SEGURIDAD DE 70CM', '', 26.00, 0, 'UND', 1, '2026-09-25 16:12:57', '2026-10-03 23:09:00', '', '', '', '', '2.2', 10, 26.00, NULL, NULL, NULL, NULL),
+(46, 1, 'GEN-383', '', 'LINEAS REFLECTIVAS PARA CONOS AMARILLA', '', 9.00, 0, 'UND', 1, '2026-09-25 16:13:19', '2026-10-03 23:09:00', '', '', '', '', '0.02', 10, 9.00, NULL, NULL, NULL, NULL),
+(47, 1, 'GEN-384', '', 'TACOS PARA TRACTO', '', 66.40, 0, 'UND', 1, '2026-09-25 16:13:39', '2026-10-03 23:09:01', '', '', '', '', '6', 10, 66.40, NULL, NULL, NULL, NULL),
+(48, 1, 'GEN-385', '', 'LLAVES MIXTAS 8, 10, 11, 12, 13, 14, 17, 19 CON ES', '', 40.00, 0, 'UND', 1, '2026-09-25 16:14:14', '2026-10-03 23:09:01', '', '', '', '', '5', 10, 40.00, NULL, NULL, NULL, NULL),
+(49, 1, 'GEN-386', '', 'ALICATE CON MANGO', '', 16.00, 0, 'UND', 1, '2026-09-25 16:14:46', '2026-10-03 23:09:01', '', '', '', '', '0.35', 10, 16.00, NULL, NULL, NULL, NULL),
+(50, 1, 'GEN-387', '', 'DESARMADOR ESTRELLA GRANDE', '', 20.00, 0, 'UND', 1, '2026-09-25 16:15:05', '2026-10-03 23:09:02', '', '', '', '', '0.2', 10, 20.00, NULL, NULL, NULL, NULL),
+(51, 1, 'GEN-388', '', 'DESARMADOR PLANO GRANDE', '', 20.00, 0, 'UND', 1, '2026-09-25 16:15:25', '2026-10-03 23:09:03', '', '', '', '', '0.2', 10, 20.00, NULL, NULL, NULL, NULL),
+(52, 1, 'GEN-389', '', 'CABLE DE BATERIA RECUBIERTO 1500 AMP', '', 106.00, 0, 'UND', 1, '2026-09-25 16:15:52', '2026-10-03 23:09:04', '', '', '', '', '2.2', 10, 106.00, NULL, NULL, NULL, NULL),
+(53, 1, 'GEN-390', '', 'TRIÁNGULOS DE SEGURIDAD', '', 28.00, 0, 'UND', 1, '2026-09-25 16:16:11', '2026-10-03 23:09:04', '', '', '', '', '0.6', 10, 28.00, NULL, NULL, NULL, NULL),
+(54, 1, 'GEN-391', '', 'MEDIDOR DE AIRE', '', 31.00, 0, 'UND', 1, '2026-09-25 16:16:35', '2026-10-03 23:09:05', '', '', '', '', '0.15', 10, 31.00, NULL, NULL, NULL, NULL),
+(55, 1, 'GEN-392', '', 'MEDIDOR DE COCADA', '', 20.00, 0, 'UND', 1, '2026-09-25 16:16:57', '2026-10-03 23:09:06', '', '', '', '', '0.05', 10, 20.00, NULL, NULL, NULL, NULL),
+(56, 1, 'GEN-393', '', 'LINTERNA DE MANO CON PILAS', '', 16.00, 0, 'UND', 1, '2026-09-25 16:17:30', '2026-10-03 23:09:07', '', '', '', '', '0.25', 10, 16.00, NULL, NULL, NULL, NULL),
+(57, 1, 'GEN-394', '', 'MARTILLO DE GOMA 16 OZ', '', 18.00, 0, 'UND', 1, '2026-09-25 16:17:52', '2026-10-03 23:09:08', '', '', '', '', '0.55', 10, 18.00, NULL, NULL, NULL, NULL),
+(58, 1, 'GEN-395', '', 'LLAVE FRANCESA 10', '', 21.00, 0, 'UND', 1, '2026-09-25 16:18:18', '2026-10-03 23:09:08', '', '', '', '', '0.45', 10, 21.00, NULL, NULL, NULL, NULL),
+(59, 1, 'GEN-396', '', 'PALETA DE PARE Y SIGA', '', 18.00, 0, 'UND', 1, '2026-09-25 16:18:46', '2026-10-03 23:09:08', '', '', '', '', '0.35', 10, 18.00, NULL, NULL, NULL, NULL),
+(60, 1, 'GEN-397', '', 'VARA LUMINOSA CON PILAS ROJA Y VERDE', '', 18.00, 0, 'UND', 1, '2026-09-25 16:19:10', '2026-10-03 23:09:09', '', '', '', '', '0.3', 10, 18.00, NULL, NULL, NULL, NULL),
+(61, 1, 'GEN-398', '', 'CAJA DE HERRAMIENTAS', '', 33.00, 0, 'UND', 1, '2026-09-25 16:19:39', '2026-10-03 23:09:09', '', '', '', '', '1.3', 10, 33.00, NULL, NULL, NULL, NULL),
+(62, 1, 'GEN-399', '', 'PLANCHA DE METAL PARA STICKER ROMBOS NFPA', '', 10.00, 0, 'UND', 1, '2026-09-25 16:20:02', '2026-10-03 23:09:10', '', '', '', '', '0.35', 10, 10.00, NULL, NULL, NULL, NULL),
+(63, 1, 'GEN-400', '', 'PLANCHA DE METAL PARA STICKER ROMBOS OXIDANTE', '', 10.00, 0, 'UND', 1, '2026-09-25 16:20:18', '2026-10-03 23:09:10', '', '', '', '', '0.35', 10, 10.00, NULL, NULL, NULL, NULL),
+(64, 1, 'GEN-401', '', 'PLANCHA DE METAL PARA STICKER 30 x 12', '', 4.00, 0, 'UND', 1, '2026-09-25 16:20:48', '2026-10-03 23:09:10', '', '', '', '', '0.15', 10, 4.00, NULL, NULL, NULL, NULL),
+(65, 1, 'GEN-402', '', 'CAJA DE PILAS TIPO D PANASONIC', '', 80.00, 0, 'UND', 1, '2026-09-25 16:21:13', '2026-10-03 23:09:11', '', '', '', '', '1.4', 10, 80.00, NULL, NULL, NULL, NULL),
+(66, 1, 'GEN-403', '', 'TRABATUERCAS TIPO GOTA 32 MM', '', 3.70, 0, 'UND', 1, '2026-09-25 16:21:51', '2026-10-03 23:09:11', '', '', '', '', '0.5', 10, 3.70, NULL, NULL, NULL, NULL),
+(67, 1, 'GEN-404', '', 'ROLLO DE CINTA REFLECTIVA 3M 50 mm x 45 mts', '', 415.00, 0, 'UND', 1, '2026-09-25 16:22:13', '2026-10-03 23:09:12', '', '', '', '', '1.1', 10, 415.00, NULL, NULL, NULL, NULL),
+(68, 1, 'GEN-405', '', 'GUANTE DE CUERO BADANA AMARILLO', '', 6.50, 0, 'UND', 1, '2026-09-26 14:37:33', '2026-10-03 23:09:12', '', '', '', '', '', 10, 6.50, NULL, NULL, NULL, NULL),
+(69, 1, 'GEN-406', '', 'GUANTES DE PRESICIÓN HILO DE PALMA LATEX', '', 5.00, 0, 'UND', 1, '2026-09-26 14:38:46', '2026-10-03 23:09:12', '', '', '', '', '', 10, 5.00, NULL, NULL, NULL, NULL),
+(70, 1, 'GEN-407', '', 'LENTE OSCURO', '', 4.50, 0, 'UND', 1, '2026-09-26 14:39:09', '2026-10-03 23:09:13', '', '', '', '', '', 10, 4.50, NULL, NULL, NULL, NULL),
+(71, 1, 'GEN-408', '', 'SOBRELENTES OSCUROS', '', 7.00, 0, 'UND', 1, '2026-09-26 14:39:42', '2026-10-03 23:09:13', '', '', '', '', '', 10, 7.00, NULL, NULL, NULL, NULL),
+(72, 1, 'GEN-409', '', 'TRAJE TYVECK BLANCO T/XL', '', 7.00, 0, 'UND', 1, '2026-09-26 14:40:07', '2026-10-03 23:09:14', '', '', '', '', '', 10, 7.00, NULL, NULL, NULL, NULL),
+(73, 1, 'GEN-410', '', 'TRAJE TYVECK BICOLOR T/XL', '', 16.50, 0, 'UND', 1, '2026-09-26 14:40:32', '2026-10-03 23:09:14', '', '', '', '', '', 10, 16.50, NULL, NULL, NULL, NULL),
+(74, 1, 'GEN-411', '', 'TAPON DE OIDO DE SILICONA', '', 90.00, 0, 'UND', 1, '2026-09-26 14:40:56', '2026-10-03 23:09:14', '', '', '', '', '', 10, 90.00, NULL, NULL, NULL, NULL),
+(75, 1, 'GEN-412', '', 'TRAPO INDUSTRIAL X 50 KG', '', 280.00, 0, 'UND', 1, '2026-09-26 14:41:26', '2026-10-03 23:09:15', '', '', '', '', '', 10, 280.00, NULL, NULL, NULL, NULL),
+(76, 1, 'GEN-413', '', 'PICO ANTICHISPAS', '', 130.00, 0, 'UND', 1, '2026-10-01 14:53:08', '2026-10-03 23:09:15', '', '', '', '', '', 10, 130.00, NULL, NULL, NULL, NULL),
+(77, 1, 'GEN-414', '', 'PALA ANTICHISPAS', '', 130.00, 0, 'UND', 1, '2026-10-01 14:55:30', '2026-10-03 23:09:16', '', '', '', '', '', 10, 130.00, NULL, NULL, NULL, NULL),
+(78, 1, 'GEN-415', '', 'PREFILTRO 5N11 3M', '', 105.00, 0, 'UND', 1, '2026-10-01 22:47:42', '2026-10-03 23:09:16', '', '', '', '', '', 10, 105.00, NULL, NULL, NULL, NULL),
+(79, 1, 'GEN-416', '', 'FILTRO 6003 3M', '', 41.00, 0, 'UND', 1, '2026-10-01 22:49:33', '2026-10-03 23:09:16', '', '', '', '', '', 10, 41.00, NULL, NULL, NULL, NULL),
+(81, 1, '-6ac1ac14b6aa5', NULL, 'GUANTES DE CUERO', 'Migrado', 6.82, 0, 'UND', 1, '2026-10-04 01:29:56', '2026-10-04 01:29:56', NULL, NULL, NULL, NULL, NULL, 10, NULL, NULL, NULL, NULL, NULL),
+(83, 1, '102045', NULL, 'CASCON CON RACHET AZUL TRIDENTE', 'CASCO AZUL', 25.00, 0, 'NIU', 1, '2026-10-15 15:33:45', '2026-10-15 15:42:25', NULL, NULL, NULL, NULL, NULL, 10, 0.00, '2026-10-15', 'TRIDENTE', '1792078945_casco-tidente-color-azul.jpg', NULL),
+(86, 1, '06IND01', NULL, 'TRABATUERCAS TIPO GOTA 32MM', 'Materia de Poliuretano', 3.70, 0, 'NIU', 1, '2026-10-26 16:36:35', '2026-10-26 16:36:35', 'SUELTO', NULL, NULL, NULL, NULL, 10, 1.90, '2026-10-26', 'NACIONAL', '1793032595_trabatuerca.jpg', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `producto_unidades`
+--
+
+CREATE TABLE `producto_unidades` (
+  `id` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `unidad_medida` varchar(20) NOT NULL,
+  `factor_conversion` decimal(8,2) NOT NULL DEFAULT 1.00,
+  `precio` decimal(10,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `producto_unidades`
+--
+
+INSERT INTO `producto_unidades` (`id`, `id_producto`, `unidad_medida`, `factor_conversion`, `precio`) VALUES
+(2, 1, 'CJA', 12.00, 120.00);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `proveedores`
+--
+
+CREATE TABLE `proveedores` (
+  `id` int(11) NOT NULL,
+  `razon_social` varchar(255) NOT NULL,
+  `ruc` varchar(20) NOT NULL,
+  `direccion` varchar(255) DEFAULT NULL,
+  `telefono` varchar(50) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `estado` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Volcado de datos para la tabla `proveedores`
+--
+
+INSERT INTO `proveedores` (`id`, `razon_social`, `ruc`, `direccion`, `telefono`, `email`, `estado`, `created_at`, `updated_at`) VALUES
+(1, 'IMPORTACIONES VOLKAN S.A.C.', '20614174898', 'PJ. SANTA CATALINA INT. 1-2 MZA. E LOTE 100 URB. CENTRO COMERCIAL ', '', '', 1, '2026-10-04 12:46:52', '2026-10-04 12:46:52'),
+(2, 'INVERSIONES JALISCO S.A.C.', '20455539731', 'MZA. 53 LOTE 6 A.H. MANUEL PRADO-EAPALDAS C. E. HENRY FORD CHALA -CARAVELÍ-AREQUIPA', '987579039', ' auxiliaradministracion@injasac.com', 1, '2026-10-04 12:46:53', '2026-10-04 12:46:53');
 
 -- --------------------------------------------------------
 
@@ -25885,6 +26421,21 @@ INSERT INTO `sell` (`id`, `invoice_code`, `invoice_file`, `comment`, `ref_id`, `
 (17, '', NULL, NULL, 10, NULL, NULL, 1, 1, NULL, 1, 1, 1, 0, NULL, NULL, NULL, 0, 1, NULL, 1, '2019-11-08 16:05:55', NULL, NULL, NULL, NULL),
 (18, '', NULL, NULL, 11, NULL, NULL, 1, 1, NULL, 1, 1, 1, 0, NULL, NULL, NULL, 0, 1, NULL, 1, '2019-11-08 16:25:02', NULL, NULL, NULL, NULL),
 (19, '', NULL, NULL, 12, NULL, NULL, 18, 1, NULL, 1, 1, 1, 0, NULL, NULL, NULL, 0, 1, NULL, 1, '2023-06-26 11:23:30', NULL, NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `id` varchar(255) NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `payload` longtext NOT NULL,
+  `last_activity` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -45384,6 +45935,7 @@ CREATE TABLE `user` (
   `username` varchar(50) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(60) NOT NULL,
+  `api_token` varchar(100) DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   `comision` float DEFAULT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
@@ -45397,9 +45949,78 @@ CREATE TABLE `user` (
 -- Volcado de datos para la tabla `user`
 --
 
-INSERT INTO `user` (`id`, `name`, `lastname`, `username`, `email`, `password`, `image`, `comision`, `status`, `kind`, `stock_id`, `created_at`, `celular`) VALUES
-(1, 'Administrador', '', 'superboar', 'superboar', 'ee9fd2a814b700959a2013235652b81519a76b61', '', NULL, 1, 1, NULL, '2019-04-04 02:27:44', ''),
-(27, 'SEBASTIAN', 'SUNA', 'Gerente comercial', 'suminexsas@gmail.com', '46b737d21e0a41fdfb2515e1ca35e25ad7568ec2', '', NULL, 1, 4, NULL, '2026-09-04 17:19:46', '920870534');
+INSERT INTO `user` (`id`, `name`, `lastname`, `username`, `email`, `password`, `api_token`, `image`, `comision`, `status`, `kind`, `stock_id`, `created_at`, `celular`) VALUES
+(1, 'Administrador', '', 'superboar', 'superboar', 'ee9fd2a814b700959a2013235652b81519a76b61', 'WSHHURwEahOTyQBttLyvqFNBNBW3qSHjgH17tlMmRgZ2nxi4czuXdUc2Jz03', '', NULL, 1, 1, NULL, '2019-04-04 02:27:44', ''),
+(27, 'SEBASTIAN', 'SUNA', 'Gerente comercial', 'suminexsas@gmail.com', '46b737d21e0a41fdfb2515e1ca35e25ad7568ec2', 'RBiZgt4Fp8DMWCyDjVnptqsIzfZDgeiIOZfebPS9GKD5Sa6hUzAuE95sBibf', '', NULL, 1, 4, NULL, '2026-09-04 17:19:46', '920870534');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `users`
+--
+
+CREATE TABLE `users` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `user_menus`
+--
+
+CREATE TABLE `user_menus` (
+  `user_id` int(11) NOT NULL,
+  `menu_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `user_menus`
+--
+
+INSERT INTO `user_menus` (`user_id`, `menu_id`) VALUES
+(1, 1),
+(1, 122),
+(1, 125),
+(1, 126),
+(1, 127),
+(1, 128),
+(1, 130),
+(1, 139),
+(1, 140),
+(1, 141),
+(1, 143),
+(1, 144),
+(1, 145),
+(1, 146),
+(1, 172),
+(1, 173),
+(1, 174),
+(1, 175),
+(1, 176),
+(1, 177),
+(27, 127),
+(27, 128),
+(27, 130),
+(27, 140),
+(27, 141),
+(27, 143),
+(27, 144),
+(27, 145),
+(27, 146),
+(27, 172),
+(27, 173),
+(27, 174),
+(27, 175),
+(27, 176),
+(27, 177);
 
 -- --------------------------------------------------------
 
@@ -45437,6 +46058,112 @@ INSERT INTO `vacaciones` (`id`, `id_colaborador`, `periodo`, `fecha_salida`, `fe
 (18, 43, '2022-2023', '2022-12-31', '2023-01-14', '15', '', 'María Alejandra -Bol_vac.pdf'),
 (19, 53, '2022-2023', '2023-02-06', '2023-02-20', '15', '', 'Julia-Bol_vac.pdf'),
 (20, 76, '2022-2023', '2022-12-31', '2023-01-14', '15', '', 'Lady-Bol_vac.pdf');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ventas`
+--
+
+CREATE TABLE `ventas` (
+  `id` int(11) NOT NULL,
+  `id_cliente` int(11) NOT NULL,
+  `id_orden_pedido` int(11) DEFAULT NULL,
+  `id_estado_pago` int(11) DEFAULT NULL,
+  `id_estado_entrega` int(11) DEFAULT NULL,
+  `id_forma_pago` int(11) DEFAULT NULL,
+  `tipo_documento` varchar(2) NOT NULL DEFAULT '01',
+  `serie` varchar(4) NOT NULL,
+  `correlativo` int(11) NOT NULL,
+  `fecha_emision` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
+  `moneda` varchar(3) NOT NULL DEFAULT 'PEN',
+  `subtotal` decimal(10,2) NOT NULL,
+  `igv` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `descuento` decimal(10,2) DEFAULT 0.00,
+  `desc_descuento` varchar(255) DEFAULT NULL,
+  `incluye_igv` tinyint(1) DEFAULT 0,
+  `estado` enum('Emitida','Anulada','Pendiente') DEFAULT 'Emitida',
+  `cod_motivo_anulacion` varchar(10) DEFAULT NULL,
+  `motivo_anulacion` varchar(255) DEFAULT NULL,
+  `correlativo_nc` varchar(50) DEFAULT NULL,
+  `sunat_ticket` varchar(255) DEFAULT NULL,
+  `sunat_hash` varchar(255) DEFAULT NULL,
+  `xml_path` varchar(255) DEFAULT NULL,
+  `cdr_path` varchar(255) DEFAULT NULL,
+  `pdf_path` varchar(255) DEFAULT NULL,
+  `envio_sunat` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `ventas`
+--
+
+INSERT INTO `ventas` (`id`, `id_cliente`, `id_orden_pedido`, `id_estado_pago`, `id_estado_entrega`, `id_forma_pago`, `tipo_documento`, `serie`, `correlativo`, `fecha_emision`, `fecha_vencimiento`, `moneda`, `subtotal`, `igv`, `total`, `descuento`, `desc_descuento`, `incluye_igv`, `estado`, `cod_motivo_anulacion`, `motivo_anulacion`, `correlativo_nc`, `sunat_ticket`, `sunat_hash`, `xml_path`, `cdr_path`, `pdf_path`, `envio_sunat`, `created_at`, `updated_at`) VALUES
+(1, 361, NULL, NULL, NULL, NULL, '01', 'E001', 1, '2025-12-31', NULL, 'PEN', 1449.15, 260.85, 1710.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-12-31 00:00:00', '2026-10-04 00:44:52'),
+(2, 362, NULL, NULL, NULL, NULL, '01', 'E001', 10, '2026-03-26', NULL, 'PEN', 122.04, 21.97, 144.01, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-26 00:00:00', '2026-10-04 00:44:53'),
+(3, 365, NULL, NULL, NULL, NULL, '01', 'E001', 11, '2026-04-08', NULL, 'PEN', 80.00, 14.40, 94.40, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-04-08 00:00:00', '2026-10-04 00:44:53'),
+(4, 362, NULL, NULL, NULL, NULL, '01', 'E001', 12, '2026-04-08', NULL, 'PEN', 182.20, 32.80, 215.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-04-08 00:00:00', '2026-10-04 00:44:53'),
+(5, 362, NULL, NULL, NULL, NULL, '01', 'E001', 13, '2026-04-09', NULL, 'PEN', 110.17, 19.83, 130.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-04-09 00:00:00', '2026-10-04 00:44:54'),
+(6, 362, NULL, NULL, NULL, NULL, '01', 'E001', 14, '2026-04-27', NULL, 'PEN', 338.48, 60.93, 399.41, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-04-27 00:00:00', '2026-10-04 00:44:54'),
+(7, 363, NULL, NULL, NULL, NULL, '01', 'E001', 15, '2026-04-29', NULL, 'PEN', 712.72, 128.29, 841.01, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-04-29 00:00:00', '2026-10-04 00:44:54'),
+(8, 366, NULL, NULL, NULL, NULL, '01', 'E001', 18, '2026-05-26', NULL, 'PEN', 267.36, 48.13, 315.49, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-05-26 00:00:00', '2026-10-04 00:44:55'),
+(9, 362, NULL, NULL, NULL, NULL, '01', 'E001', 19, '2026-05-27', NULL, 'PEN', 177.97, 32.03, 210.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-05-27 00:00:00', '2026-10-04 00:44:55'),
+(10, 367, NULL, NULL, NULL, NULL, '01', 'E001', 2, '2026-01-20', NULL, 'PEN', 35.64, 6.42, 42.06, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-20 00:00:00', '2026-10-04 00:44:55'),
+(11, 368, NULL, NULL, NULL, NULL, '01', 'E001', 20, '2026-06-02', NULL, 'PEN', 275.42, 49.58, 325.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-06-02 00:00:00', '2026-10-04 00:44:55'),
+(12, 363, NULL, NULL, NULL, NULL, '01', 'E001', 23, '2026-06-05', NULL, 'PEN', 1952.54, 351.46, 2304.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-06-05 00:00:00', '2026-10-04 00:44:56'),
+(13, 362, NULL, NULL, NULL, NULL, '01', 'E001', 24, '2026-06-08', NULL, 'PEN', 1952.54, 351.46, 2304.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-06-08 00:00:00', '2026-10-04 00:44:56'),
+(14, 369, NULL, NULL, NULL, NULL, '01', 'E001', 25, '2026-07-14', NULL, 'PEN', 339.20, 61.06, 400.26, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-07-14 00:00:00', '2026-10-04 00:44:56'),
+(15, 370, NULL, NULL, NULL, NULL, '01', 'E001', 26, '2026-07-29', NULL, 'PEN', 323.73, 58.27, 382.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-07-29 00:00:00', '2026-10-04 00:44:57'),
+(16, 362, NULL, NULL, NULL, NULL, '01', 'E001', 29, '2026-07-31', NULL, 'PEN', 1625.51, 292.59, 1918.10, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-07-31 00:00:00', '2026-10-04 00:44:57'),
+(17, 362, NULL, NULL, NULL, NULL, '01', 'E001', 3, '2026-02-27', NULL, 'PEN', 174.58, 31.42, 206.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-27 00:00:00', '2026-10-04 00:44:57'),
+(18, 362, NULL, NULL, NULL, NULL, '01', 'E001', 30, '2026-07-31', NULL, 'PEN', 944.92, 170.08, 1115.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-07-31 00:00:00', '2026-10-04 00:44:58'),
+(19, 362, NULL, NULL, NULL, NULL, '01', 'E001', 31, '2026-07-31', NULL, 'PEN', 2952.46, 531.44, 3483.90, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-07-31 00:00:00', '2026-10-04 00:44:58'),
+(20, 371, NULL, NULL, NULL, NULL, '01', 'E001', 32, '2026-08-01', NULL, 'PEN', 33.90, 6.10, 40.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-01 00:00:00', '2026-10-04 00:44:58'),
+(21, 363, NULL, NULL, NULL, NULL, '01', 'E001', 33, '2026-08-07', NULL, 'PEN', 2485.59, 447.41, 2933.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-07 00:00:00', '2026-10-04 00:44:58'),
+(22, 372, NULL, NULL, NULL, NULL, '01', 'E001', 34, '2026-08-10', NULL, 'PEN', 6419.49, 1155.51, 7575.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-10 00:00:00', '2026-10-04 00:44:59'),
+(23, 372, NULL, NULL, NULL, NULL, '01', 'E001', 35, '2026-08-10', NULL, 'PEN', 5220.34, 939.66, 6160.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-10 00:00:00', '2026-10-04 00:44:59'),
+(24, 372, NULL, NULL, NULL, NULL, '01', 'E001', 36, '2026-08-10', NULL, 'PEN', 180.08, 32.42, 212.50, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-10 00:00:00', '2026-10-04 00:44:59'),
+(25, 363, NULL, NULL, NULL, NULL, '01', 'E001', 37, '2026-08-11', NULL, 'PEN', 358.47, 64.53, 423.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-11 00:00:00', '2026-10-04 00:45:00'),
+(26, 372, NULL, NULL, NULL, NULL, '01', 'E001', 38, '2026-08-11', NULL, 'PEN', 335.59, 60.41, 396.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-11 00:00:00', '2026-10-04 00:45:00'),
+(27, 365, NULL, NULL, NULL, NULL, '01', 'E001', 4, '2026-03-10', NULL, 'PEN', 65.00, 11.70, 76.70, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-10 00:00:00', '2026-10-04 00:45:00'),
+(28, 362, NULL, NULL, NULL, NULL, '01', 'E001', 40, '2026-08-13', NULL, 'PEN', 677.97, 122.03, 800.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-13 00:00:00', '2026-10-04 00:45:00'),
+(29, 362, NULL, NULL, NULL, NULL, '01', 'E001', 41, '2026-08-17', NULL, 'PEN', 1718.81, 309.39, 2028.20, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-17 00:00:00', '2026-10-04 00:45:01'),
+(30, 372, NULL, NULL, NULL, NULL, '01', 'E001', 42, '2026-08-18', NULL, 'PEN', 305.08, 54.92, 360.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-18 00:00:00', '2026-10-04 00:45:01'),
+(31, 373, NULL, NULL, NULL, NULL, '01', 'E001', 43, '2026-08-18', NULL, 'PEN', 1635.59, 294.41, 1930.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-18 00:00:00', '2026-10-04 00:45:02'),
+(32, 371, NULL, NULL, NULL, NULL, '01', 'E001', 44, '2026-08-28', NULL, 'PEN', 979.68, 176.34, 1156.02, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-28 00:00:00', '2026-10-04 00:45:02'),
+(33, 362, NULL, NULL, NULL, NULL, '01', 'E001', 45, '2026-08-28', NULL, 'PEN', 732.24, 131.80, 864.04, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-08-28 00:00:00', '2026-10-04 00:45:02'),
+(34, 363, NULL, NULL, NULL, NULL, '01', 'E001', 46, '2026-09-01', NULL, 'PEN', 228.80, 41.18, 269.98, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-01 00:00:00', '2026-10-04 00:45:03'),
+(35, 373, NULL, NULL, NULL, NULL, '01', 'E001', 47, '2026-09-05', NULL, 'PEN', 817.78, 147.20, 964.98, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-05 00:00:00', '2026-10-04 00:45:03'),
+(36, 372, NULL, NULL, NULL, NULL, '01', 'E001', 48, '2026-09-05', NULL, 'PEN', 15572.00, 2802.96, 18374.96, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-05 00:00:00', '2026-10-04 00:45:04'),
+(37, 372, NULL, NULL, NULL, NULL, '01', 'E001', 49, '2026-09-05', NULL, 'PEN', 16880.05, 3038.41, 19918.46, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-05 00:00:00', '2026-10-04 00:45:04'),
+(38, 365, NULL, NULL, NULL, NULL, '01', 'E001', 5, '2026-03-10', NULL, 'PEN', 126.00, 22.68, 148.68, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-10 00:00:00', '2026-10-04 00:45:04'),
+(39, 372, NULL, NULL, NULL, NULL, '01', 'E001', 50, '2026-09-07', NULL, 'PEN', 15675.84, 2821.65, 18497.49, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-07 00:00:00', '2026-10-04 00:45:04'),
+(40, 372, NULL, NULL, NULL, NULL, '01', 'E001', 51, '2026-09-07', NULL, 'PEN', 3518.65, 633.36, 4152.01, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-07 00:00:00', '2026-10-04 00:45:05'),
+(41, 372, NULL, NULL, NULL, NULL, '01', 'E001', 52, '2026-09-07', NULL, 'PEN', 3503.81, 630.69, 4134.50, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-07 00:00:00', '2026-10-04 00:45:05'),
+(42, 377, NULL, NULL, NULL, NULL, '01', 'E001', 53, '2026-09-09', NULL, 'PEN', 512.72, 92.29, 605.01, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-09 00:00:00', '2026-10-04 00:45:05'),
+(43, 372, NULL, NULL, NULL, NULL, '01', 'E001', 54, '2026-09-09', NULL, 'PEN', 732.24, 131.80, 864.04, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-09 00:00:00', '2026-10-04 00:45:06'),
+(44, 363, NULL, NULL, NULL, NULL, '01', 'E001', 55, '2026-09-11', NULL, 'PEN', 310.10, 55.82, 365.92, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-11 00:00:00', '2026-10-04 00:45:06'),
+(45, 362, NULL, NULL, NULL, NULL, '01', 'E001', 6, '2026-03-01', NULL, 'PEN', 338.98, 61.02, 400.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-01 00:00:00', '2026-10-04 00:45:06'),
+(46, 365, NULL, NULL, NULL, NULL, '01', 'E001', 7, '2026-03-14', NULL, 'PEN', 100.00, 18.00, 118.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-14 00:00:00', '2026-10-04 00:45:07'),
+(47, 362, NULL, NULL, NULL, NULL, '01', 'E001', 8, '2026-03-14', NULL, 'PEN', 883.96, 159.11, 1043.07, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-14 00:00:00', '2026-10-04 00:45:07'),
+(48, 363, NULL, NULL, NULL, NULL, '01', 'E001', 9, '2026-03-26', NULL, 'PEN', 318.65, 57.36, 376.01, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-26 00:00:00', '2026-10-04 00:45:07'),
+(49, 375, NULL, NULL, NULL, NULL, '01', 'F001', 1, '2026-09-16', '2026-09-16', 'PEN', 0.00, 0.00, 0.00, 0.00, NULL, 0, 'Anulada', NULL, '01 - Anulación de la operación', 'FF01-3', NULL, NULL, NULL, NULL, NULL, 1, '2026-09-16 11:55:08', '2026-10-04 03:35:38'),
+(50, 363, NULL, NULL, NULL, NULL, '01', 'F001', 10, '2026-09-26', '2026-09-26', 'PEN', 67.80, 12.20, 80.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-26 16:15:45', '2026-10-04 00:45:08'),
+(51, 363, NULL, NULL, NULL, NULL, '01', 'F001', 11, '2026-10-01', '2026-10-01', 'PEN', 1483.56, 267.04, 1750.60, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-10-01 15:01:18', '2026-10-04 00:45:09'),
+(52, 363, NULL, NULL, NULL, NULL, '01', 'F001', 12, '2026-10-01', '2026-10-01', 'PEN', 237.29, 42.71, 280.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-10-01 15:18:39', '2026-10-04 00:45:09'),
+(53, 372, NULL, NULL, NULL, NULL, '01', 'F001', 13, '2026-10-01', '2026-10-01', 'PEN', 1567.80, 282.20, 1850.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-10-01 22:53:30', '2026-10-04 00:45:10'),
+(54, 362, NULL, NULL, NULL, NULL, '01', 'F001', 2, '2026-09-17', '2026-09-17', 'PEN', 1690.68, 304.32, 1995.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-17 14:51:46', '2026-10-04 00:45:10'),
+(55, 372, NULL, NULL, NULL, NULL, '01', 'F001', 3, '2026-09-17', '2026-09-17', 'PEN', 0.00, 0.00, 0.00, 0.00, NULL, 0, 'Anulada', NULL, '01 - Anulación de la operación', 'FF01-1', NULL, NULL, NULL, NULL, NULL, 1, '2026-09-17 21:21:40', '2026-10-04 03:35:38'),
+(56, 362, NULL, NULL, NULL, NULL, '01', 'F001', 4, '2026-09-18', '2026-10-02', 'PEN', 0.00, 0.00, 0.00, 0.00, NULL, 0, 'Anulada', NULL, '01 - Anulación de la operación', 'FF01-2', NULL, NULL, NULL, NULL, NULL, 1, '2026-09-18 18:28:07', '2026-10-04 03:35:38'),
+(57, 362, NULL, NULL, NULL, NULL, '01', 'F001', 5, '2026-09-18', '2026-09-18', 'PEN', 50.85, 9.15, 60.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-18 19:25:42', '2026-10-04 00:45:12'),
+(58, 362, NULL, NULL, NULL, NULL, '01', 'F001', 6, '2026-09-18', '2026-10-02', 'PEN', 214.41, 38.59, 253.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-18 20:35:05', '2026-10-04 00:45:12'),
+(59, 373, NULL, NULL, NULL, NULL, '01', 'F001', 7, '2026-09-24', '2026-09-24', 'PEN', 250.85, 45.15, 296.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-24 19:31:14', '2026-10-04 00:45:13'),
+(60, 363, NULL, NULL, NULL, NULL, '01', 'F001', 8, '2026-09-25', '2026-09-25', 'PEN', 7691.95, 1384.55, 9076.50, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-25 16:36:43', '2026-10-04 00:45:14'),
+(61, 362, NULL, NULL, NULL, NULL, '01', 'F001', 9, '2026-09-26', '2026-10-11', 'PEN', 1868.64, 336.36, 2205.00, 0.00, NULL, 0, 'Emitida', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-09-26 14:46:50', '2026-10-04 00:45:19');
 
 -- --------------------------------------------------------
 
@@ -45667,6 +46394,56 @@ INSERT INTO `ventas_detalle` (`id`, `codigo_venta_cabecera`, `id_producto`, `can
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `ventas_detalles`
+--
+
+CREATE TABLE `ventas_detalles` (
+  `id` int(11) NOT NULL,
+  `id_venta` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `descripcion_personalizada` text DEFAULT NULL,
+  `cantidad` decimal(10,2) NOT NULL,
+  `precio_unitario` decimal(10,6) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `ventas_detalles`
+--
+
+INSERT INTO `ventas_detalles` (`id`, `id_venta`, `id_producto`, `descripcion_personalizada`, `cantidad`, `precio_unitario`, `total`, `created_at`, `updated_at`) VALUES
+(1, 49, 81, NULL, 1.00, 6.822881, 6.82, '2026-10-04 01:29:56', '2026-10-04 01:29:56'),
+(2, 54, 14, NULL, 18.00, 76.270000, 1372.86, '2026-10-04 01:29:57', '2026-10-04 01:29:57'),
+(3, 55, 16, NULL, 10.00, 243.220000, 2432.20, '2026-10-04 01:29:58', '2026-10-04 01:29:58'),
+(4, 56, 5, NULL, 3.00, 27.966102, 83.90, '2026-10-04 01:29:58', '2026-10-04 01:29:58'),
+(5, 57, 18, NULL, 1.00, 50.847458, 50.85, '2026-10-04 01:29:59', '2026-10-04 01:29:59'),
+(6, 58, 5, NULL, 3.00, 27.966102, 83.90, '2026-10-04 01:29:59', '2026-10-04 01:29:59'),
+(7, 59, 20, NULL, 1.00, 59.322034, 59.32, '2026-10-04 01:30:00', '2026-10-04 01:30:00'),
+(8, 60, 24, NULL, 6.00, 4.661017, 27.97, '2026-10-04 01:30:01', '2026-10-04 01:30:01'),
+(9, 61, 68, NULL, 36.00, 5.508475, 198.31, '2026-10-04 01:30:10', '2026-10-04 01:30:10'),
+(10, 50, 65, NULL, 1.00, 67.796610, 67.80, '2026-10-04 01:30:11', '2026-10-04 01:30:11'),
+(11, 51, 45, NULL, 4.00, 22.033898, 88.14, '2026-10-04 01:30:12', '2026-10-04 01:30:12'),
+(12, 52, 75, NULL, 1.00, 237.288136, 237.29, '2026-10-04 01:30:13', '2026-10-04 01:30:13'),
+(13, 53, 78, NULL, 5.00, 88.983051, 444.92, '2026-10-04 01:30:14', '2026-10-04 01:30:14');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `venta_cuotas`
+--
+
+CREATE TABLE `venta_cuotas` (
+  `id` int(11) NOT NULL,
+  `id_venta` int(11) NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `fecha_pago` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `verificacion_competencias`
 --
 
@@ -45771,6 +46548,14 @@ ALTER TABLE `afps`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `app_menus`
+--
+ALTER TABLE `app_menus`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `app_menus_module_key_unique` (`module_key`),
+  ADD KEY `app_menus_parent_id_sort_order_is_active_index` (`parent_id`,`sort_order`,`is_active`);
+
+--
 -- Indices de la tabla `aptitud`
 --
 ALTER TABLE `aptitud`
@@ -45823,6 +46608,20 @@ ALTER TABLE `box`
 --
 ALTER TABLE `brand`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `cache`
+--
+ALTER TABLE `cache`
+  ADD PRIMARY KEY (`key`),
+  ADD KEY `cache_expiration_index` (`expiration`);
+
+--
+-- Indices de la tabla `cache_locks`
+--
+ALTER TABLE `cache_locks`
+  ADD PRIMARY KEY (`key`),
+  ADD KEY `cache_locks_expiration_index` (`expiration`);
 
 --
 -- Indices de la tabla `caja`
@@ -45895,6 +46694,13 @@ ALTER TABLE `category`
 --
 ALTER TABLE `clases`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `clientes`
+--
+ALTER TABLE `clientes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ruc` (`ruc`);
 
 --
 -- Indices de la tabla `codigos_sunat`
@@ -45995,10 +46801,25 @@ ALTER TABLE `cotizacion`
   ADD PRIMARY KEY (`codigo`);
 
 --
+-- Indices de la tabla `cotizaciones`
+--
+ALTER TABLE `cotizaciones`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_cliente` (`id_cliente`);
+
+--
 -- Indices de la tabla `cotizacion_detalle`
 --
 ALTER TABLE `cotizacion_detalle`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `cotizacion_detalles`
+--
+ALTER TABLE `cotizacion_detalles`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_cotizacion` (`id_cotizacion`),
+  ADD KEY `id_producto` (`id_producto`);
 
 --
 -- Indices de la tabla `cronograma_registro`
@@ -46079,6 +46900,14 @@ ALTER TABLE `f`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`),
+  ADD KEY `failed_jobs_connection_queue_failed_at_index` (`connection`,`queue`,`failed_at`);
+
+--
 -- Indices de la tabla `familiares`
 --
 ALTER TABLE `familiares`
@@ -46113,6 +46942,14 @@ ALTER TABLE `ficha_tecnica`
 --
 ALTER TABLE `formacion`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `guias_remision`
+--
+ALTER TABLE `guias_remision`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `numero_guia` (`numero_guia`),
+  ADD KEY `id_venta` (`id_venta`);
 
 --
 -- Indices de la tabla `guia_cabecera`
@@ -46169,6 +47006,19 @@ ALTER TABLE `insumos_2`
 -- Indices de la tabla `insumo_stock`
 --
 ALTER TABLE `insumo_stock`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `jobs`
+--
+ALTER TABLE `jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `jobs_queue_index` (`queue`);
+
+--
+-- Indices de la tabla `job_batches`
+--
+ALTER TABLE `job_batches`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -46229,6 +47079,12 @@ ALTER TABLE `message`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `migrations`
+--
+ALTER TABLE `migrations`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `modificaciones`
 --
 ALTER TABLE `modificaciones`
@@ -46268,6 +47124,20 @@ ALTER TABLE `operation_type`
 --
 ALTER TABLE `opiniones`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `ordenes_pedido`
+--
+ALTER TABLE `ordenes_pedido`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_cotizacion` (`id_cotizacion`);
+
+--
+-- Indices de la tabla `ordenes_pedido_detalles`
+--
+ALTER TABLE `ordenes_pedido_detalles`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_orden_pedido` (`id_orden_pedido`);
 
 --
 -- Indices de la tabla `orden_compra`
@@ -46318,6 +47188,12 @@ ALTER TABLE `pasos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`email`);
+
+--
 -- Indices de la tabla `payment`
 --
 ALTER TABLE `payment`
@@ -46351,10 +47227,27 @@ ALTER TABLE `person`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `personal_access_tokens`
+--
+ALTER TABLE `personal_access_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`),
+  ADD KEY `personal_access_tokens_expires_at_index` (`expires_at`);
+
+--
 -- Indices de la tabla `precios`
 --
 ALTER TABLE `precios`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `precios_cliente`
+--
+ALTER TABLE `precios_cliente`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `id_producto` (`id_producto`,`id_cliente`),
+  ADD KEY `id_cliente` (`id_cliente`);
 
 --
 -- Indices de la tabla `price`
@@ -46383,6 +47276,27 @@ ALTER TABLE `product`
   ADD PRIMARY KEY (`id`),
   ADD KEY `category_id` (`category_id`),
   ADD KEY `user_id` (`user_id`);
+
+--
+-- Indices de la tabla `productos`
+--
+ALTER TABLE `productos`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `codigo` (`codigo`);
+
+--
+-- Indices de la tabla `producto_unidades`
+--
+ALTER TABLE `producto_unidades`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_producto` (`id_producto`);
+
+--
+-- Indices de la tabla `proveedores`
+--
+ALTER TABLE `proveedores`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ruc` (`ruc`);
 
 --
 -- Indices de la tabla `provincia`
@@ -46443,6 +47357,14 @@ ALTER TABLE `sell`
   ADD KEY `operation_type_id` (`operation_type_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `person_id` (`person_id`);
+
+--
+-- Indices de la tabla `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sessions_user_id_index` (`user_id`),
+  ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
 -- Indices de la tabla `sistema_pensiones`
@@ -46586,10 +47508,31 @@ ALTER TABLE `user`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `users_email_unique` (`email`);
+
+--
+-- Indices de la tabla `user_menus`
+--
+ALTER TABLE `user_menus`
+  ADD PRIMARY KEY (`user_id`,`menu_id`);
+
+--
 -- Indices de la tabla `vacaciones`
 --
 ALTER TABLE `vacaciones`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `ventas`
+--
+ALTER TABLE `ventas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_cliente` (`id_cliente`),
+  ADD KEY `id_orden_pedido` (`id_orden_pedido`);
 
 --
 -- Indices de la tabla `ventas_cabecera`
@@ -46602,6 +47545,21 @@ ALTER TABLE `ventas_cabecera`
 --
 ALTER TABLE `ventas_detalle`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `ventas_detalles`
+--
+ALTER TABLE `ventas_detalles`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_venta` (`id_venta`),
+  ADD KEY `id_producto` (`id_producto`);
+
+--
+-- Indices de la tabla `venta_cuotas`
+--
+ALTER TABLE `venta_cuotas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_venta` (`id_venta`);
 
 --
 -- Indices de la tabla `verificacion_competencias`
@@ -46636,6 +47594,12 @@ ALTER TABLE `actas_reunion`
 --
 ALTER TABLE `afps`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `app_menus`
+--
+ALTER TABLE `app_menus`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
 
 --
 -- AUTO_INCREMENT de la tabla `aptitud`
@@ -46764,6 +47728,12 @@ ALTER TABLE `clases`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT de la tabla `clientes`
+--
+ALTER TABLE `clientes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=380;
+
+--
 -- AUTO_INCREMENT de la tabla `codigos_sunat`
 --
 ALTER TABLE `codigos_sunat`
@@ -46791,13 +47761,13 @@ ALTER TABLE `complementos`
 -- AUTO_INCREMENT de la tabla `compras`
 --
 ALTER TABLE `compras`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1358;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1359;
 
 --
 -- AUTO_INCREMENT de la tabla `compras_detalle`
 --
 ALTER TABLE `compras_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1372;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1373;
 
 --
 -- AUTO_INCREMENT de la tabla `conductores`
@@ -46854,10 +47824,22 @@ ALTER TABLE `costo_uso_taller`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
+-- AUTO_INCREMENT de la tabla `cotizaciones`
+--
+ALTER TABLE `cotizaciones`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de la tabla `cotizacion_detalle`
 --
 ALTER TABLE `cotizacion_detalle`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `cotizacion_detalles`
+--
+ALTER TABLE `cotizacion_detalles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `cronograma_registro`
@@ -46938,6 +47920,12 @@ ALTER TABLE `f`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT de la tabla `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `familiares`
 --
 ALTER TABLE `familiares`
@@ -46966,6 +47954,12 @@ ALTER TABLE `ficha_tecnica`
 --
 ALTER TABLE `formacion`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+
+--
+-- AUTO_INCREMENT de la tabla `guias_remision`
+--
+ALTER TABLE `guias_remision`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `guia_cabecera`
@@ -47014,6 +48008,12 @@ ALTER TABLE `insumos_2`
 --
 ALTER TABLE `insumo_stock`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `jobs`
+--
+ALTER TABLE `jobs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `kind_doc`
@@ -47070,6 +48070,12 @@ ALTER TABLE `message`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT de la tabla `migrations`
+--
+ALTER TABLE `migrations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT de la tabla `modificaciones`
 --
 ALTER TABLE `modificaciones`
@@ -47091,7 +48097,7 @@ ALTER TABLE `observaciones`
 -- AUTO_INCREMENT de la tabla `operation`
 --
 ALTER TABLE `operation`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `operation_type`
@@ -47104,6 +48110,18 @@ ALTER TABLE `operation_type`
 --
 ALTER TABLE `opiniones`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `ordenes_pedido`
+--
+ALTER TABLE `ordenes_pedido`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `ordenes_pedido_detalles`
+--
+ALTER TABLE `ordenes_pedido_detalles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `orden_compra`
@@ -47178,10 +48196,22 @@ ALTER TABLE `person`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=378;
 
 --
+-- AUTO_INCREMENT de la tabla `personal_access_tokens`
+--
+ALTER TABLE `personal_access_tokens`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `precios`
 --
 ALTER TABLE `precios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `precios_cliente`
+--
+ALTER TABLE `precios_cliente`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `price`
@@ -47206,6 +48236,24 @@ ALTER TABLE `produccion_detalle`
 --
 ALTER TABLE `product`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=417;
+
+--
+-- AUTO_INCREMENT de la tabla `productos`
+--
+ALTER TABLE `productos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+
+--
+-- AUTO_INCREMENT de la tabla `producto_unidades`
+--
+ALTER TABLE `producto_unidades`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `proveedores`
+--
+ALTER TABLE `proveedores`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `provincia`
@@ -47394,16 +48442,40 @@ ALTER TABLE `user`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
+-- AUTO_INCREMENT de la tabla `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `vacaciones`
 --
 ALTER TABLE `vacaciones`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
+-- AUTO_INCREMENT de la tabla `ventas`
+--
+ALTER TABLE `ventas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+
+--
 -- AUTO_INCREMENT de la tabla `ventas_detalle`
 --
 ALTER TABLE `ventas_detalle`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+
+--
+-- AUTO_INCREMENT de la tabla `ventas_detalles`
+--
+ALTER TABLE `ventas_detalles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT de la tabla `venta_cuotas`
+--
+ALTER TABLE `venta_cuotas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `verificacion_competencias`
@@ -47428,10 +48500,74 @@ ALTER TABLE `yy`
 --
 
 --
+-- Filtros para la tabla `cotizaciones`
+--
+ALTER TABLE `cotizaciones`
+  ADD CONSTRAINT `cotizaciones_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id`);
+
+--
+-- Filtros para la tabla `cotizacion_detalles`
+--
+ALTER TABLE `cotizacion_detalles`
+  ADD CONSTRAINT `cotizacion_detalles_ibfk_1` FOREIGN KEY (`id_cotizacion`) REFERENCES `cotizaciones` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cotizacion_detalles_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id`);
+
+--
+-- Filtros para la tabla `guias_remision`
+--
+ALTER TABLE `guias_remision`
+  ADD CONSTRAINT `guias_remision_ibfk_1` FOREIGN KEY (`id_venta`) REFERENCES `ventas` (`id`);
+
+--
 -- Filtros para la tabla `insumos_2`
 --
 ALTER TABLE `insumos_2`
   ADD CONSTRAINT `fk_insumos_familia_codigo` FOREIGN KEY (`familia`) REFERENCES `familias` (`codigo`) ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `ordenes_pedido`
+--
+ALTER TABLE `ordenes_pedido`
+  ADD CONSTRAINT `ordenes_pedido_ibfk_1` FOREIGN KEY (`id_cotizacion`) REFERENCES `cotizaciones` (`id`);
+
+--
+-- Filtros para la tabla `ordenes_pedido_detalles`
+--
+ALTER TABLE `ordenes_pedido_detalles`
+  ADD CONSTRAINT `ordenes_pedido_detalles_ibfk_1` FOREIGN KEY (`id_orden_pedido`) REFERENCES `ordenes_pedido` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `precios_cliente`
+--
+ALTER TABLE `precios_cliente`
+  ADD CONSTRAINT `precios_cliente_ibfk_1` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `precios_cliente_ibfk_2` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `producto_unidades`
+--
+ALTER TABLE `producto_unidades`
+  ADD CONSTRAINT `producto_unidades_ibfk_1` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `ventas`
+--
+ALTER TABLE `ventas`
+  ADD CONSTRAINT `ventas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id`),
+  ADD CONSTRAINT `ventas_ibfk_2` FOREIGN KEY (`id_orden_pedido`) REFERENCES `ordenes_pedido` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `ventas_detalles`
+--
+ALTER TABLE `ventas_detalles`
+  ADD CONSTRAINT `ventas_detalles_ibfk_1` FOREIGN KEY (`id_venta`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ventas_detalles_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id`);
+
+--
+-- Filtros para la tabla `venta_cuotas`
+--
+ALTER TABLE `venta_cuotas`
+  ADD CONSTRAINT `venta_cuotas_ibfk_1` FOREIGN KEY (`id_venta`) REFERENCES `ventas` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

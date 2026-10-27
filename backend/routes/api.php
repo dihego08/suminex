@@ -44,6 +44,10 @@ Route::get('/', function () {
     // Rutas para Códigos SUNAT y Marcas
     Route::get('codigos-sunat', [CodigoSunatController::class, 'index']);
     Route::get('marcas', [MarcaController::class, 'index']);
+    Route::get('marcas/{id}', [MarcaController::class, 'show']);
+    Route::post('marcas', [MarcaController::class, 'store']);
+    Route::put('marcas/{id}', [MarcaController::class, 'update']);
+    Route::delete('marcas/{id}', [MarcaController::class, 'destroy']);
 
     // Rutas para Clientes
     Route::get('clientes', [ClienteController::class, 'index']);

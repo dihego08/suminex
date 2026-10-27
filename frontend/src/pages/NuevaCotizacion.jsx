@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Plus, Trash2, ArrowLeft, Receipt, Calendar, User, FileText, Image as ImageIcon, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { API_URL } from '../config';
+import { API_URL, SERVER_URL } from '../config';
 
 const NuevaCotizacion = () => {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const NuevaCotizacion = () => {
     id_cliente: '',
     fecha: new Date().toISOString().split('T')[0],
     fecha_vencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days later
+    aplica_igv: true,
     terminos_condiciones: 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'
   });
 
@@ -45,9 +46,10 @@ const NuevaCotizacion = () => {
           id_cliente: cot.id_cliente,
           fecha: cot.fecha,
           fecha_vencimiento: cot.fecha_vencimiento,
+          aplica_igv: cot.aplica_igv === undefined || cot.aplica_igv === null ? true : cot.aplica_igv == 1,
           terminos_condiciones: cot.terminos_condiciones || ''
         });
-        
+
         if (cot.cliente) {
           setSearchTerm(`${cot.cliente.razon_social} (RUC: ${cot.cliente.ruc})`);
         }
@@ -73,7 +75,7 @@ const NuevaCotizacion = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
-      
+
       // A simple way to close product dropdown if clicking outside
       if (!event.target.closest('.product-search-container')) {
         setActiveProductDropdown(null);
@@ -97,7 +99,7 @@ const NuevaCotizacion = () => {
   const selectProduct = (index, prod) => {
     let finalPrice = prod.precio_base;
     const baseUnit = prod.unidad_medida || 'UND';
-    
+
     // Historial de precios por cliente (buscando la unidad base por defecto)
     if (formData.id_cliente && prod.precios_clientes) {
       const precioEspecial = prod.precios_clientes.find(pc => pc.id_cliente === formData.id_cliente && (pc.unidad_medida === baseUnit || !pc.unidad_medida));
@@ -108,7 +110,7 @@ const NuevaCotizacion = () => {
 
     const newDetalles = [...detalles];
     newDetalles[index].id_producto = prod.id;
-    newDetalles[index].nota = ''; 
+    newDetalles[index].nota = '';
     newDetalles[index].nombre = prod.nombre;
     newDetalles[index].precio_unitario = finalPrice;
     newDetalles[index].unidad_medida = baseUnit;
@@ -116,7 +118,7 @@ const NuevaCotizacion = () => {
     newDetalles[index].imagen = prod.imagen;
     newDetalles[index].busqueda = `${prod.codigo} - ${prod.nombre}`;
     newDetalles[index].total = finalPrice * newDetalles[index].cantidad;
-    
+
     setDetalles(newDetalles);
     setActiveProductDropdown(null);
   };
@@ -135,13 +137,13 @@ const NuevaCotizacion = () => {
     setShowDropdown(false);
   };
 
-  const filteredClients = clientes.filter(c => 
-    c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredClients = clientes.filter(c =>
+    c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.ruc.includes(searchTerm)
   );
 
   const subtotal = detalles.reduce((acc, curr) => acc + curr.total, 0);
-  const igv = subtotal * 0.18;
+  const igv = formData.aplica_igv ? subtotal * 0.18 : 0;
   const total = subtotal + igv;
 
   const handleSubmit = async (e) => {
@@ -165,6 +167,7 @@ const NuevaCotizacion = () => {
 
       const payload = {
         ...formData,
+        aplica_igv: formData.aplica_igv ? 1 : 0,
         base_imponible: subtotal.toFixed(2),
         igv: igv.toFixed(2),
         total: total.toFixed(2),
@@ -176,7 +179,7 @@ const NuevaCotizacion = () => {
       } else {
         await axios.post(`${API_URL}/cotizaciones`, payload);
       }
-      
+
       navigate('/cotizaciones');
     } catch (error) {
       alert("Error al guardar la cotización");
@@ -224,7 +227,7 @@ const NuevaCotizacion = () => {
                   onFocus={() => setShowDropdown(true)}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setFormData({...formData, id_cliente: ''}); // Reset ID if user types freely
+                    setFormData({ ...formData, id_cliente: '' }); // Reset ID if user types freely
                     setShowDropdown(true);
                   }}
                   className={`${inputClassName} pl-10`}
@@ -234,8 +237,8 @@ const NuevaCotizacion = () => {
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                   {filteredClients.length > 0 ? (
                     filteredClients.map(c => (
-                      <div 
-                        key={c.id} 
+                      <div
+                        key={c.id}
                         onClick={() => selectClient(c)}
                         className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors"
                       >
@@ -280,9 +283,9 @@ const NuevaCotizacion = () => {
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <FileText className="text-blue-500" size={20} /> Ítems de Cotización
             </h2>
-            <button 
-              type="button" 
-              onClick={addRow} 
+            <button
+              type="button"
+              onClick={addRow}
               className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors shadow-sm"
             >
               <Plus size={18} /> Añadir Ítem
@@ -306,8 +309,8 @@ const NuevaCotizacion = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {detalles.map((det, index) => {
-                    const filteredProducts = productos.filter(p => 
-                      p.nombre?.toLowerCase().includes((det.busqueda || '').toLowerCase()) || 
+                    const filteredProducts = productos.filter(p =>
+                      p.nombre?.toLowerCase().includes((det.busqueda || '').toLowerCase()) ||
                       p.codigo?.toLowerCase().includes((det.busqueda || '').toLowerCase())
                     );
 
@@ -316,7 +319,7 @@ const NuevaCotizacion = () => {
                         <td className="p-3 text-center">
                           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 mx-auto">
                             {det.imagen ? (
-                              <img src={det.imagen} alt="Producto" className="w-full h-full object-cover" />
+                              <img src={`${SERVER_URL}/images/products/${det.imagen}`} alt="Producto" className="w-full h-full object-cover" />
                             ) : (
                               <ImageIcon size={20} className="text-gray-400" />
                             )}
@@ -344,15 +347,15 @@ const NuevaCotizacion = () => {
                             <div className="absolute z-50 w-[400px] mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
                               {filteredProducts.length > 0 ? (
                                 filteredProducts.slice(0, 50).map(p => (
-                                  <div 
-                                    key={p.id} 
+                                  <div
+                                    key={p.id}
                                     onClick={() => selectProduct(index, p)}
                                     className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors flex gap-3 items-center"
                                   >
                                     {p.imagen ? (
-                                      <img src={p.imagen} alt={p.nombre} className="w-10 h-10 rounded-md object-cover bg-gray-100" />
+                                      <img src={`${SERVER_URL}/images/products/${p.imagen}`} alt={p.nombre} className="w-10 h-10 rounded-md object-cover bg-gray-100" />
                                     ) : (
-                                      <div className="w-10 h-10 rounded-md bg-gray-100 flex justify-center items-center"><ImageIcon size={16} className="text-gray-400"/></div>
+                                      <div className="w-10 h-10 rounded-md bg-gray-100 flex justify-center items-center"><ImageIcon size={16} className="text-gray-400" /></div>
                                     )}
                                     <div>
                                       <div className="font-medium text-gray-800 text-sm whitespace-normal break-words">{p.nombre}</div>
@@ -368,7 +371,7 @@ const NuevaCotizacion = () => {
                         </td>
                         <td className="p-3">
                           <input
-                            type="text" 
+                            type="text"
                             value={det.nota}
                             onChange={(e) => handleDetalleChange(index, 'nota', e.target.value)}
                             placeholder="Nota (Ej. Color rojo)"
@@ -377,7 +380,7 @@ const NuevaCotizacion = () => {
                         </td>
                         <td className="p-3">
                           {det.unidades_secundarias && det.unidades_secundarias.length > 0 ? (
-                            <select 
+                            <select
                               className={tableInputClassName}
                               value={det.unidad_medida}
                               onChange={(e) => {
@@ -385,7 +388,7 @@ const NuevaCotizacion = () => {
                                 const prod = productos.find(p => p.id === det.id_producto);
                                 const baseUnit = prod?.unidad_medida || 'UND';
                                 let newPrice = det.precio_unitario;
-                                
+
                                 if (selected === baseUnit) {
                                   newPrice = prod.precio_base;
                                   if (formData.id_cliente && prod.precios_clientes) {
@@ -406,18 +409,18 @@ const NuevaCotizacion = () => {
                                   if (!hasSpecialUnitPrice) {
                                     const obj = det.unidades_secundarias.find(u => u.unidad_medida === selected);
                                     if (obj && obj.precio) {
-                                       newPrice = obj.precio;
+                                      newPrice = obj.precio;
                                     } else if (obj && obj.factor_conversion) {
-                                       let basePrice = prod.precio_base;
-                                       if (formData.id_cliente && prod.precios_clientes) {
-                                         const precioEspecial = prod.precios_clientes.find(pc => pc.id_cliente === formData.id_cliente && (pc.unidad_medida === baseUnit || !pc.unidad_medida));
-                                         if (precioEspecial) basePrice = precioEspecial.precio_personalizado;
-                                       }
-                                       newPrice = basePrice * obj.factor_conversion;
+                                      let basePrice = prod.precio_base;
+                                      if (formData.id_cliente && prod.precios_clientes) {
+                                        const precioEspecial = prod.precios_clientes.find(pc => pc.id_cliente === formData.id_cliente && (pc.unidad_medida === baseUnit || !pc.unidad_medida));
+                                        if (precioEspecial) basePrice = precioEspecial.precio_personalizado;
+                                      }
+                                      newPrice = basePrice * obj.factor_conversion;
                                     }
                                   }
                                 }
-                                
+
                                 handleDetalleChange(index, 'unidad_medida', selected);
                                 handleDetalleChange(index, 'precio_unitario', newPrice);
                               }}
@@ -456,9 +459,9 @@ const NuevaCotizacion = () => {
                         </td>
                         <td className="p-3 text-center">
                           {detalles.length > 1 ? (
-                            <button 
-                              type="button" 
-                              onClick={() => removeRow(index)} 
+                            <button
+                              type="button"
+                              onClick={() => removeRow(index)}
                               className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Eliminar ítem"
                             >
@@ -487,25 +490,35 @@ const NuevaCotizacion = () => {
         {/* Resumen y Guardar */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-6">
           <div className="w-full md:w-1/2">
-             <label className="block text-sm font-medium text-gray-700 mb-2">
-                Texto Predeterminado (Editable)
-             </label>
-             <textarea 
-               rows="4"
-               value={formData.terminos_condiciones}
-               onChange={(e) => setFormData({...formData, terminos_condiciones: e.target.value})}
-               className="w-full border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm resize-y"
-             ></textarea>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Texto Predeterminado (Editable)
+            </label>
+            <textarea
+              rows="4"
+              value={formData.terminos_condiciones}
+              onChange={(e) => setFormData({ ...formData, terminos_condiciones: e.target.value })}
+              className="w-full border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm resize-y"
+            ></textarea>
           </div>
 
           <div className="w-full md:w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <h3 className="font-semibold text-gray-800 mb-4 pb-2 border-b">Resumen</h3>
+            <label htmlFor="aplica_igv" className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="aplica_igv"
+                checked={formData.aplica_igv}
+                onChange={(e) => setFormData({ ...formData, aplica_igv: e.target.checked })}
+                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Aplica IGV (18%)</span>
+            </label>
             <div className="flex justify-between mb-3 text-sm text-gray-600">
               <span>Base Imponible:</span>
               <span className="font-medium">S/ {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-4 text-sm text-gray-600">
-              <span>IGV (18%):</span>
+              <span>{formData.aplica_igv ? 'IGV (18%):' : 'IGV (no aplica):'}</span>
               <span className="font-medium">S/ {igv.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center font-bold text-xl text-gray-900 border-t pt-4">
@@ -516,8 +529,8 @@ const NuevaCotizacion = () => {
         </div>
 
         <div className="flex justify-end mt-4">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 w-full md:w-auto"
           >
             <Save size={20} /> {isEditing ? 'Actualizar Cotización' : 'Guardar Cotización'}

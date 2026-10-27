@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Venta;
 use App\Models\VentaDetalle;
 use App\Models\Cliente;
+use App\Models\Producto;
 use App\Services\GreenterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,14 +18,14 @@ class VentaController extends Controller
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('serie', 'like', "%{$search}%")
-                  ->orWhere('correlativo', 'like', "%{$search}%")
-                  ->orWhere(\Illuminate\Support\Facades\DB::raw("CONCAT(serie, '-', correlativo)"), 'like', "%{$search}%")
-                  ->orWhereHas('cliente', function($qc) use ($search) {
-                      $qc->where('razon_social', 'like', "%{$search}%")
-                         ->orWhere('ruc', 'like', "%{$search}%");
-                  });
+                    ->orWhere('correlativo', 'like', "%{$search}%")
+                    ->orWhere(\Illuminate\Support\Facades\DB::raw("CONCAT(serie, '-', correlativo)"), 'like', "%{$search}%")
+                    ->orWhereHas('cliente', function ($qc) use ($search) {
+                        $qc->where('razon_social', 'like', "%{$search}%")
+                            ->orWhere('ruc', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -40,7 +41,7 @@ class VentaController extends Controller
             $query->where('envio_sunat', $request->estado_sunat);
         }
 
-        $ventas = $query->orderBy('id', 'desc')->paginate(20);
+        $ventas = $query->orderBy('fecha_emision', 'desc')->orderBy('id', 'desc')->paginate(20);
         return response()->json($ventas);
     }
 
@@ -139,8 +140,8 @@ class VentaController extends Controller
 
             DB::commit();
             return response()->json($venta, 201);
-            
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => 'Error al generar la venta', 'msg' => $e->getMessage()], 500);
         }
@@ -149,7 +150,7 @@ class VentaController extends Controller
     public function update(Request $request, $id)
     {
         $venta = Venta::findOrFail($id);
-        
+
         if ($venta->envio_sunat == 1) {
             return response()->json(['error' => 'No se puede editar una venta ya enviada a SUNAT'], 400);
         }
@@ -200,8 +201,8 @@ class VentaController extends Controller
 
             DB::commit();
             return response()->json($venta, 200);
-            
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => 'Error al editar la venta', 'msg' => $e->getMessage()], 500);
         }
@@ -229,7 +230,7 @@ class VentaController extends Controller
             $greenter = new GreenterService();
             $cliente = Cliente::find($venta->id_cliente);
             $detallesObj = VentaDetalle::with('producto')->where('id_venta', $venta->id)->get();
-            
+
             $sunatRes = $greenter->emitirFactura($venta, $cliente, $detallesObj);
 
             if ($sunatRes['success']) {
@@ -268,7 +269,7 @@ class VentaController extends Controller
 
         $hashValido = $venta->sunat_hash && stripos($venta->sunat_hash, 'ERROR') !== 0 ? $venta->sunat_hash : '';
         $qr = $h::qrDataUri(implode('|', [
-            $h::RUC,
+                $h::RUC,
             $venta->tipo_documento,
             $venta->serie,
             $venta->correlativo,
@@ -323,7 +324,8 @@ class VentaController extends Controller
         foreach ($venta->detalles as $item) {
             $i++;
             $desc = e($item->producto->nombre ?? '');
-            if ($item->descripcion_personalizada) $desc .= ' - ' . e($item->descripcion_personalizada);
+            if ($item->descripcion_personalizada)
+                $desc .= ' - ' . e($item->descripcion_personalizada);
             $html .= '<tr>'
                 . '<td style="text-align: center;">' . $i . '</td>'
                 . '<td style="text-align: center;">' . e($item->producto->codigo ?? '') . '</td>'
@@ -417,7 +419,7 @@ class VentaController extends Controller
     public function descargarPdfNC($id)
     {
         $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas'])->findOrFail($id);
-        
+
         if ($venta->estado !== 'Anulada' || !$venta->correlativo_nc) {
             return response()->json(['error' => 'La venta no tiene una Nota de Crédito asociada'], 400);
         }
@@ -505,7 +507,7 @@ class VentaController extends Controller
         $options = new \Dompdf\Options();
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
-        
+
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->loadHtml($html);
@@ -525,11 +527,11 @@ class VentaController extends Controller
         ]);
 
         $venta = Venta::findOrFail($id);
-        
+
         if ($venta->envio_sunat != 1) {
             return response()->json(['error' => 'La venta no ha sido enviada a SUNAT'], 400);
         }
-        
+
         if ($venta->estado == 'Anulada') {
             return response()->json(['error' => 'La venta ya se encuentra anulada'], 400);
         }
@@ -541,29 +543,29 @@ class VentaController extends Controller
 
             // Buscar último correlativo en BD
             $maxCorrelativo = Venta::where('correlativo_nc', 'like', $serieNC . '-%')
-                                  ->select(\Illuminate\Support\Facades\DB::raw("CAST(SUBSTRING_INDEX(correlativo_nc, '-', -1) AS UNSIGNED) as num"))
-                                  ->orderBy('num', 'desc')
-                                  ->first();
+                ->select(\Illuminate\Support\Facades\DB::raw("CAST(SUBSTRING_INDEX(correlativo_nc, '-', -1) AS UNSIGNED) as num"))
+                ->orderBy('num', 'desc')
+                ->first();
 
             // También verificar correlativo en la tabla legacy aux por consistencia
             $auxNC = \Illuminate\Support\Facades\DB::table('aux')->where('tabla', 'nota_credito')->first();
-            $numFromAux = $auxNC ? (int)$auxNC->id : 0;
-            $numFromVentas = $maxCorrelativo ? (int)$maxCorrelativo->num : 0;
-            
+            $numFromAux = $auxNC ? (int) $auxNC->id : 0;
+            $numFromVentas = $maxCorrelativo ? (int) $maxCorrelativo->num : 0;
+
             $ultimoCorrelativo = max($numFromAux, $numFromVentas);
             $correlativoNCNum = $ultimoCorrelativo + 1;
 
             $greenter = new GreenterService();
             $cliente = Cliente::find($venta->id_cliente);
             $detallesObj = VentaDetalle::with('producto')->where('id_venta', $venta->id)->get();
-            
+
             $sunatRes = $greenter->emitirNotaCredito(
-                $venta, 
-                $cliente, 
-                $detallesObj, 
-                $request->cod_motivo, 
-                $request->motivo, 
-                $serieNC, 
+                $venta,
+                $cliente,
+                $detallesObj,
+                $request->cod_motivo,
+                $request->motivo,
+                $serieNC,
                 $correlativoNCNum
             );
 
@@ -617,13 +619,13 @@ class VentaController extends Controller
                 }
 
                 return response()->json([
-                    'success' => true, 
+                    'success' => true,
                     'msg' => 'Venta anulada correctamente. Nota de crédito ' . $venta->correlativo_nc . ' generada y enviada a SUNAT.'
                 ]);
             } else {
                 return response()->json(['error' => 'Rechazado por SUNAT', 'msg' => $sunatRes['errorMsg']], 400);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Error al anular en SUNAT', 'msg' => $e->getMessage()], 500);
         }
     }
@@ -632,11 +634,11 @@ class VentaController extends Controller
     {
         $venta = Venta::findOrFail($id);
         $path = storage_path('app/' . $venta->xml_path);
-        
+
         if (!$venta->xml_path || !file_exists($path)) {
             return response()->json(['error' => 'Archivo XML no encontrado'], 404);
         }
-        
+
         return response()->download($path, basename($path), [
             'Content-Type' => 'application/xml',
         ]);
@@ -646,11 +648,11 @@ class VentaController extends Controller
     {
         $venta = Venta::findOrFail($id);
         $path = storage_path('app/' . $venta->cdr_path);
-        
+
         if (!$venta->cdr_path || !file_exists($path)) {
             return response()->json(['error' => 'Archivo CDR no encontrado'], 404);
         }
-        
+
         return response()->download($path, basename($path), [
             'Content-Type' => 'application/zip',
         ]);

@@ -15,6 +15,7 @@ class Cotizacion extends Model
         'fecha_vencimiento',
         'base_imponible',
         'igv',
+        'aplica_igv',
         'total',
         'estado',
         'terminos_condiciones'

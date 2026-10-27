@@ -271,8 +271,12 @@ const NuevaVenta = () => {
 
       navigate('/ventas');
     } catch (error) {
-      alert("Error al guardar la venta");
       console.error(error);
+      const data = error.response?.data;
+      const detalle = data?.errors
+        ? Object.values(data.errors).flat().join('\n')
+        : (data?.msg || data?.error || data?.message || error.message);
+      alert("Error al guardar la venta:\n" + detalle);
     }
   };
 
