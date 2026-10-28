@@ -403,9 +403,7 @@ class VentaController extends Controller
         $i = 0;
         foreach ($venta->detalles as $item) {
             $i++;
-            $desc = e($item->producto->nombre ?? '');
-            if ($item->descripcion_personalizada)
-                $desc .= ' - ' . e($item->descripcion_personalizada);
+            $desc = $this->descripcionItemPdf($item);
             $html .= '<tr>'
                 . '<td style="text-align: center;">' . $i . '</td>'
                 . '<td style="text-align: center;">' . e($item->producto->codigo ?? '') . '</td>'
@@ -498,90 +496,153 @@ class VentaController extends Controller
 
     public function descargarPdfNC($id)
     {
-        $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas'])->findOrFail($id);
+        $venta = Venta::with(['cliente', 'detalles.producto'])->findOrFail($id);
 
         if ($venta->estado !== 'Anulada' || !$venta->correlativo_nc) {
             return response()->json(['error' => 'La venta no tiene una Nota de Crédito asociada'], 400);
         }
 
-        $empresa = [
-            'razon_social' => 'SUMINEX',
-            'ruc' => '20615095932',
-            'direccion' => 'CALLE SAN MATEO NRO. 177 - URB. SANTA TERESA - ATE - LIMA',
-            'telefono' => '988582772',
-            'email' => 'ventas@suminex.com'
+        $h = \App\Services\PdfComprobanteHelper::class;
+        $c = $h::COLOR;
+
+        $esFactura = $venta->tipo_documento == '01';
+        $numero = $h::numeroDesdeTexto($venta->correlativo_nc);
+        $docAfectado = $h::numeroDocumento($venta->serie, $venta->correlativo);
+        $esUsd = $venta->moneda === 'USD';
+        $simbolo = $esUsd ? '$' : 'S/';
+        // La NC se emite al anular; no hay columna propia de fecha, se usa la fecha de anulación (updated_at)
+        $fechaNc = $venta->updated_at ?? $venta->fecha_emision;
+
+        $cliente = $venta->cliente;
+        $docCliente = (string) ($cliente->ruc ?? '');
+        $labelDoc = strlen($docCliente) === 11 ? 'RUC' : (strlen($docCliente) === 8 ? 'DNI' : 'Documento');
+
+        $motivos = [
+            '01' => 'Anulación de la operación',
+            '02' => 'Anulación por error en el RUC',
+            '03' => 'Corrección por error en la descripción',
+            '04' => 'Descuento global',
+            '05' => 'Descuento por ítem',
+            '06' => 'Devolución total',
+            '07' => 'Devolución por ítem',
+            '08' => 'Bonificación',
+            '09' => 'Disminución en el valor',
+            '10' => 'Otros conceptos',
         ];
+        $codMotivo = (string) $venta->cod_motivo_anulacion;
+        $tipoMotivo = $codMotivo !== '' ? $codMotivo . ' – ' . ($motivos[$codMotivo] ?? '') : '—';
 
-        // Base64 logo
-        $logoPath = '/home/diego/Downloads/logo-4.png';
-        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
-        $logoSrc = 'data:image/png;base64,' . $logoData;
+        [$serieNc, $corrNc] = array_pad(explode('-', (string) $venta->correlativo_nc, 2), 2, '');
+        $qr = $h::qrDataUri(implode('|', [
+            $h::RUC,
+            '07',
+            trim($serieNc),
+            trim($corrNc),
+            number_format($venta->igv, 2, '.', ''),
+            number_format($venta->total, 2, '.', ''),
+            date('Y-m-d', strtotime($fechaNc)),
+            strlen($docCliente) === 11 ? '6' : '1',
+            $docCliente,
+        ]) . '|');
 
-        // Html
-        $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
-            . 'body { font-family: "Helvetica", "Arial", sans-serif; font-size: 11px; }'
-            . 'table { width: 100%; border-collapse: collapse; }'
-            . '.header { text-align: center; margin-bottom: 20px; }'
-            . '.box-ruc { border: 2px solid #000; border-radius: 10px; padding: 15px; text-align: center; font-size: 14px; font-weight: bold; }'
-            . 'th { background-color: #f2f2f2; font-weight: bold; border-bottom: 1px solid #ccc; padding: 5px; }'
-            . 'td { padding: 5px; border-bottom: 1px dashed #eee; }'
-            . '.totals td { border: none; padding: 2px 5px; }'
+        $fila = function ($label, $valor) {
+            return '<td class="lbl" style="padding: 3px 0; width: 17%;">' . $label . '</td><td style="padding: 3px 8px 3px 0; width: 33%;">' . $valor . '</td>';
+        };
+
+        $html = '<!DOCTYPE html><html><head><meta charset="UTF-8" /><style>'
+            . $h::estilosBase('70px')
+            . '#footer{position: fixed; left: 0; right: 0; bottom: -50px; height: 40px;}'
             . '</style></head><body>'
-            . '<table style="margin-bottom: 20px;">'
-            . '<tr>'
-            . '<td style="width: 60%; border: none;">'
-            . '<img src="' . $logoSrc . '" width="200" style="margin-bottom: 10px;"/><br>'
-            . '<strong>' . $empresa['razon_social'] . '</strong><br>'
-            . $empresa['direccion'] . '<br>'
-            . 'Cel: ' . $empresa['telefono'] . '<br>'
-            . 'Email: ' . $empresa['email'] . '<br>'
-            . '</td>'
-            . '<td style="width: 40%; border: none;">'
-            . '<div class="box-ruc">'
-            . 'RUC: ' . $empresa['ruc'] . '<br><br>'
-            . 'NOTA DE CRÉDITO ELECTRÓNICA<br><br>'
-            . $venta->correlativo_nc
+
+            . '<div id="footer">'
+            . '<div style="border-top: 1px solid #cfd3da; padding-top: 6px; text-align: center; font-size: 8.5px; color: #666;">'
+            . 'Representación impresa de la Nota de Crédito Electrónica. Puede consultar su validez en www.sunat.gob.pe con su clave SOL, o en el portal del emisor.'
             . '</div>'
-            . '</td>'
-            . '</tr>'
-            . '</table>'
+            . '</div>'
 
-            . '<table style="margin-bottom: 15px;">'
-            . '<tr><td style="width: 15%; border: none;"><strong>CLIENTE:</strong></td><td style="width: 85%; border: none;">' . ($venta->cliente->razon_social ?? 'N/A') . '</td></tr>'
-            . '<tr><td style="border: none;"><strong>RUC/DNI:</strong></td><td style="border: none;">' . ($venta->cliente->ruc ?? 'N/A') . '</td></tr>'
-            . '<tr><td style="border: none;"><strong>FECHA E.:</strong></td><td style="border: none;">' . $venta->fecha_emision . '</td></tr>'
-            . '<tr><td style="border: none;"><strong>MONEDA:</strong></td><td style="border: none;">' . ($venta->moneda == 'PEN' ? 'Soles' : 'Dólares') . '</td></tr>'
-            . '<tr><td style="border: none;"><strong>MOTIVO:</strong></td><td style="border: none;">' . ($venta->motivo_anulacion) . '</td></tr>'
-            . '<tr><td style="border: none;"><strong>DOC AFECTADO:</strong></td><td style="border: none;">' . $venta->serie . '-' . $venta->correlativo . '</td></tr>'
-            . '</table>'
+            . $h::cabecera('NOTA DE CRÉDITO ELECTRÓNICA', $numero, true)
 
-            . '<table style="margin-bottom: 20px;">'
-            . '<thead><tr>'
-            . '<th>CANT.</th>'
-            . '<th>UNIDAD</th>'
-            . '<th>DESCRIPCIÓN</th>'
-            . '<th style="text-align: right;">V. UNITARIO</th>'
-            . '<th style="text-align: right;">TOTAL</th>'
-            . '</tr></thead>'
-            . '<tbody>';
+            . '<div class="box" style="margin-bottom: 16px;"><table>'
+            . '<tr>' . $fila('Cliente:', $h::valor($cliente->razon_social ?? '')) . $fila('Fecha de emisión:', $h::fecha($fechaNc)) . '</tr>'
+            . '<tr>' . $fila($labelDoc . ':', $h::valor($docCliente)) . $fila('Moneda:', $esUsd ? 'DÓLARES (USD)' : 'SOLES (PEN)') . '</tr>'
+            . '<tr>' . $fila('Dirección:', $h::valor($cliente->direccion ?? '')) . $fila('Doc. afectado:', ($esFactura ? 'Factura ' : 'Boleta ') . e($docAfectado)) . '</tr>'
+            . '<tr>' . $fila('Teléfono:', $h::valor($cliente->telefono ?? '')) . $fila('Fecha doc. afectado:', $h::fecha($venta->fecha_emision)) . '</tr>'
+            . '<tr>' . $fila('Tipo de NC:', e($tipoMotivo)) . $fila('Sustento:', $h::valor($venta->motivo_anulacion)) . '</tr>'
+            . '</table></div>'
 
-        foreach ($venta->detalles as $d) {
-            $desc = htmlspecialchars($d->descripcion_personalizada ?? $d->producto->nombre);
+            . '<div style="border: 1px solid #555; border-top: none;">'
+            . '<table class="items">'
+            . '<tr>'
+            . '<th style="width: 5%; text-align: center;">ÍTEM</th>'
+            . '<th style="width: 10%; text-align: center;">CÓDIGO</th>'
+            . '<th style="text-align: center;">Descripción</th>'
+            . '<th style="width: 6%; text-align: center;">Und</th>'
+            . '<th style="width: 7%; text-align: center;">Cant.</th>'
+            . '<th style="width: 11%; text-align: right;">Valor unit.</th>'
+            . '<th style="width: 11%; text-align: right;">Precio unit.</th>'
+            . '<th style="width: 11%; text-align: right;">Valor venta</th>'
+            . '</tr>';
+
+        $i = 0;
+        foreach ($venta->detalles as $item) {
+            $i++;
             $html .= '<tr>'
-                . '<td style="text-align: center;">' . $d->cantidad . '</td>'
-                . '<td style="text-align: center;">NIU</td>'
-                . '<td>' . $desc . '</td>'
-                . '<td style="text-align: right;">' . number_format($d->precio_unitario, 2) . '</td>'
-                . '<td style="text-align: right;">' . number_format($d->cantidad * $d->precio_unitario, 2) . '</td>'
+                . '<td style="text-align: center;">' . $i . '</td>'
+                . '<td style="text-align: center;">' . e($item->producto->codigo ?? '') . '</td>'
+                . '<td>' . $this->descripcionItemPdf($item) . '</td>'
+                . '<td style="text-align: center;">' . e($item->producto->unidad_medida ?? 'UND') . '</td>'
+                . '<td style="text-align: center;">' . number_format($item->cantidad, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->precio_unitario, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->precio_unitario * 1.18, 2) . '</td>'
+                . '<td style="text-align: right;">' . number_format($item->cantidad * $item->precio_unitario, 2) . '</td>'
                 . '</tr>';
         }
 
-        $html .= '</tbody></table>'
-            . '<table class="totals" style="width: 40%; margin-left: 60%; margin-bottom: 20px;">'
-            . '<tr><td style="text-align: right;"><strong>OP. GRAVADA:</strong></td><td style="text-align: right;">' . number_format($venta->subtotal, 2) . '</td></tr>'
-            . '<tr><td style="text-align: right;"><strong>I.G.V. (18%):</strong></td><td style="text-align: right;">' . number_format($venta->igv, 2) . '</td></tr>'
-            . '<tr><td style="text-align: right;"><strong>TOTAL A DEVOLVER:</strong></td><td style="text-align: right;">' . number_format($venta->total, 2) . '</td></tr>'
+        if ($venta->descuento > 0) {
+            $i++;
+            $html .= '<tr>'
+                . '<td></td><td></td>'
+                . '<td style="font-weight: bold; text-transform: uppercase;">' . e($venta->desc_descuento ?: 'DESCUENTO') . '</td>'
+                . '<td></td><td></td><td></td><td></td>'
+                . '<td style="text-align: right;">-' . number_format($venta->descuento, 2) . '</td>'
+                . '</tr>';
+        }
+
+        $relleno = max(0, 190 - $i * 24);
+        $html .= '<tr><td colspan="8" style="height: ' . $relleno . 'px;"></td></tr>'
+            . '</table></div>'
+
+            . '<table style="margin-top: 14px;"><tr>'
+            . '<td style="width: 58%; padding-right: 16px;">'
+            . '<div style="margin-bottom: 10px;"><strong>SON:</strong> ' . $h::montoEnLetras((float) $venta->total, $venta->moneda) . '</div>'
+            . '<table><tr>'
+            . '<td style="width: 104px;">'
+            . ($qr
+                ? '<img src="' . $qr . '" style="width: 96px; height: 96px;" />'
+                : '<div style="width: 96px; height: 96px; border: 1px dashed #999;"></div>')
+            . '</td>'
+            . '<td style="font-size: 9.5px; line-height: 1.5;">'
+            . '<span class="lbl" style="color: #555;">Documento que modifica:</span> <span class="muted">' . ($esFactura ? 'Factura ' : 'Boleta ') . e($docAfectado) . '</span><br/>'
+            . '</td>'
+            . '</tr></table>'
+            . '</td>'
+            . '<td style="width: 42%;">'
+            . '<table>';
+
+        if ($venta->descuento > 0) {
+            $html .= '<tr><td style="padding: 4px 10px;">Descuento</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->descuento, 2) . '</td></tr>';
+        }
+
+        $html .= '<tr><td style="padding: 4px 10px;">Op. gravadas</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->subtotal, 2) . '</td></tr>'
+            . '<tr><td style="padding: 4px 10px;">IGV (18%)</td><td style="padding: 4px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->igv, 2) . '</td></tr>'
+            . '<tr><td colspan="2" style="height: 6px;"></td></tr>'
+            . '<tr style="background: ' . $c . '; color: #fff; font-weight: bold; font-size: 13px;">'
+            . '<td style="padding: 8px 10px;">IMPORTE TOTAL</td>'
+            . '<td style="padding: 8px 10px; text-align: right;">' . $simbolo . ' ' . number_format($venta->total, 2) . '</td>'
+            . '</tr>'
             . '</table>'
+            . '</td>'
+            . '</tr></table>'
             . '</body></html>';
 
         $options = new \Dompdf\Options();
@@ -597,6 +658,18 @@ class VentaController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="nc-' . $venta->correlativo_nc . '.pdf"',
         ]);
+    }
+
+    /**
+     * Descripción de un ítem en los PDF (factura, boleta y nota de crédito): nombre del producto + descripción personalizada.
+     */
+    private function descripcionItemPdf($item): string
+    {
+        $desc = e($item->producto->nombre ?? '');
+        if ($item->descripcion_personalizada) {
+            $desc .= ' - ' . e($item->descripcion_personalizada);
+        }
+        return $desc;
     }
 
     public function anularVenta(Request $request, $id)
