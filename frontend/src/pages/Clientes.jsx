@@ -10,11 +10,13 @@ const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Estados para el Modal
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ 
+  const emptyForm = {
     ruc: '', razon_social: '', direccion: '', telefono: '', email: '',
     tipo_pago: 0, banco: 'BCP', nro_cuenta: '', whatsapp: '', tiene_credito: false, limite_credito: ''
-  });
+  };
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
     fetchClientes();
@@ -31,22 +33,66 @@ const Clientes = () => {
     }
   };
 
-  const handleCreate = async (e) => {
+  const openCreate = () => {
+    setEditingId(null);
+    setFormData(emptyForm);
+    setShowModal(true);
+  };
+
+  const handleEdit = (cliente) => {
+    setEditingId(cliente.id);
+    setFormData({
+      ruc: cliente.ruc || '',
+      razon_social: cliente.razon_social || '',
+      direccion: cliente.direccion || '',
+      telefono: cliente.telefono || '',
+      email: cliente.email || '',
+      tipo_pago: Number(cliente.tipo_pago) || 0,
+      banco: cliente.banco || 'BCP',
+      nro_cuenta: cliente.nro_cuenta || '',
+      whatsapp: cliente.whatsapp || '',
+      tiene_credito: cliente.tiene_credito == 1,
+      limite_credito: cliente.limite_credito ?? ''
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/clientes`, formData);
-      setShowModal(false);
-      setFormData({ 
-        ruc: '', razon_social: '', direccion: '', telefono: '', email: '',
-        tipo_pago: 0, banco: 'BCP', nro_cuenta: '', whatsapp: '', tiene_credito: false, limite_credito: ''
-      });
+      if (editingId) {
+        await axios.put(`${API_URL}/clientes/${editingId}`, formData);
+      } else {
+        await axios.post(`${API_URL}/clientes`, formData);
+      }
+      closeModal();
+      setFormData(emptyForm);
       fetchClientes(); // Recargar la lista
     } catch (error) {
-      alert("Error al crear el cliente: " + (error.response?.data?.error || error.message));
+      const data = error.response?.data;
+      const detalle = data?.errors
+        ? Object.values(data.errors).flat().join('\n')
+        : (data?.error || data?.message || error.message);
+      alert(`Error al ${editingId ? 'actualizar' : 'crear'} el cliente:\n` + detalle);
     }
   };
 
-  const filteredClientes = clientes.filter(c =>
+  const handleDelete = async (cliente) => {
+    if (!window.confirm(`¿Seguro que deseas eliminar al cliente "${cliente.razon_social}"?`)) return;
+    try {
+      await axios.delete(`${API_URL}/clientes/${cliente.id}`);
+      fetchClientes();
+    } catch (error) {
+      alert("Error al eliminar el cliente: " + (error.response?.data?.error || error.response?.data?.message || error.message));
+    }
+  };
+
+  const filteredClientes =clientes.filter(c =>
     c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.ruc.includes(searchTerm)
   );
@@ -66,7 +112,7 @@ const Clientes = () => {
           />
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openCreate}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/30"
         >
           <Plus size={20} />
@@ -123,10 +169,10 @@ const Clientes = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center gap-3">
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
+                          <button onClick={() => handleEdit(cliente)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
                             <Edit size={18} />
                           </button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+                          <button onClick={() => handleDelete(cliente)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
                             <Trash2 size={18} />
                           </button>
                         </div>
@@ -140,18 +186,18 @@ const Clientes = () => {
         )}
       </div>
 
-      {/* Modal de Nuevo Cliente */}
+      {/* Modal de Nuevo / Editar Cliente */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-bold text-gray-800">Registrar Nuevo Cliente</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <h3 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}</h3>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-6">
+            <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">RUC *</label>
@@ -225,11 +271,11 @@ const Clientes = () => {
                 )}
               </div>
               <div className="mt-8 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                   Cancelar
                 </button>
                 <button type="submit" className="px-5 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30">
-                  Guardar Cliente
+                  {editingId ? 'Actualizar Cliente' : 'Guardar Cliente'}
                 </button>
               </div>
             </form>

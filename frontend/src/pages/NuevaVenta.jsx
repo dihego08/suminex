@@ -145,8 +145,12 @@ const NuevaVenta = () => {
         incluye_igv: v.incluye_igv == 1,
         id_forma_pago: v.id_forma_pago || 1,
         id_estado_pago: v.id_estado_pago || 1,
-        id_estado_entrega: v.id_estado_entrega || 1
+        id_estado_entrega: v.id_estado_entrega || 1,
+        id_orden_pedido: v.id_orden_pedido || null
       });
+      if (v.orden_pedido) {
+        setSearchOrdenTerm(v.orden_pedido.numero || `OP-${String(v.orden_pedido.id).padStart(5, '0')}`);
+      }
       // Set client text
       const clientFound = clientes.find(c => c.id === v.id_cliente) || v.cliente;
       if (clientFound) {
@@ -336,7 +340,7 @@ const NuevaVenta = () => {
             </div>
             {showOrdenDropdown && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                {ordenes.filter(o => 
+                {ordenes.filter(o => o.estado === 'Pendiente' || o.id === formData.id_orden_pedido).filter(o =>
                     (o.numero || `OP-${String(o.id).padStart(5, '0')}`).toLowerCase().includes(searchOrdenTerm.toLowerCase()) || 
                     (o.cliente?.razon_social || '').toLowerCase().includes(searchOrdenTerm.toLowerCase()) ||
                     (o.cotizacion?.cliente?.razon_social || '').toLowerCase().includes(searchOrdenTerm.toLowerCase())
@@ -354,7 +358,7 @@ const NuevaVenta = () => {
                     </div>
                   </div>
                 ))}
-                {ordenes.length === 0 && (
+                {!ordenes.some(o => o.estado === 'Pendiente' || o.id === formData.id_orden_pedido) && (
                   <div className="p-3 text-sm text-gray-500 text-center">No hay órdenes disponibles</div>
                 )}
               </div>

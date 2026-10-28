@@ -110,14 +110,30 @@ class GreenterService
             ->setSubTotal($totalVenta)
             ->setMtoImpVenta($totalVenta);
 
+        $cuotasAjustadas = [];
         if ($venta->id_forma_pago == 2 && $venta->cuotas && count($venta->cuotas) > 0) {
-            $montoNetoPendiente = $venta->cuotas->sum('monto');
+            // SUNAT (3265): el monto pendiente no puede superar el importe total, y la suma de
+            // cuotas debe ser igual al monto pendiente. Si por redondeo las cuotas exceden el
+            // total, se descuenta la diferencia de la última cuota.
+            foreach ($venta->cuotas as $cuota) {
+                $cuotasAjustadas[] = ['id' => $cuota->id, 'monto' => round((float) $cuota->monto, 2), 'fecha_pago' => $cuota->fecha_pago];
+            }
+            $sumaCuotas = round(array_sum(array_column($cuotasAjustadas, 'monto')), 2);
+            $exceso = round($sumaCuotas - $totalVenta, 2);
+            for ($i = count($cuotasAjustadas) - 1; $i >= 0 && $exceso > 0; $i--) {
+                $descontar = min($exceso, $cuotasAjustadas[$i]['monto']);
+                $cuotasAjustadas[$i]['monto'] = round($cuotasAjustadas[$i]['monto'] - $descontar, 2);
+                $exceso = round($exceso - $descontar, 2);
+            }
+            $cuotasAjustadas = array_values(array_filter($cuotasAjustadas, fn ($c) => $c['monto'] > 0));
+            $montoNetoPendiente = round(array_sum(array_column($cuotasAjustadas, 'monto')), 2);
+
             $invoice->setFormaPago(new FormaPagoCredito($montoNetoPendiente));
             $cuotasArr = [];
-            foreach ($venta->cuotas as $cuota) {
+            foreach ($cuotasAjustadas as $cuota) {
                 $cuotasArr[] = (new Cuota())
-                    ->setMonto($cuota->monto)
-                    ->setFechaPago(new DateTime($cuota->fecha_pago));
+                    ->setMonto($cuota['monto'])
+                    ->setFechaPago(new DateTime($cuota['fecha_pago']));
             }
             $invoice->setCuotas($cuotasArr);
         } else {
@@ -179,6 +195,7 @@ class GreenterService
             'xml_path' => 'greenter/' . $fileName . '.xml',
             'cdr_path' => $res->isSuccess() ? 'greenter/R-' . $fileName . '.zip' : null,
             'totales' => ['subtotal' => $gravadas, 'igv' => $igvTotal, 'total' => $totalVenta],
+            'cuotas' => $cuotasAjustadas,
         ];
     }
 

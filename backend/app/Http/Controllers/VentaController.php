@@ -47,7 +47,7 @@ class VentaController extends Controller
 
     public function show($id)
     {
-        $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas'])->findOrFail($id);
+        $venta = Venta::with(['cliente', 'detalles.producto', 'cuotas', 'ordenPedido'])->findOrFail($id);
         return response()->json($venta);
     }
 
@@ -70,6 +70,10 @@ class VentaController extends Controller
             'total' => 'required|numeric',
             'detalles' => 'required|array',
         ]);
+
+        if ($error = $this->validarOrdenDisponible($request->id_orden_pedido)) {
+            return response()->json(['error' => $error], 400);
+        }
 
         DB::beginTransaction();
 
@@ -138,6 +142,8 @@ class VentaController extends Controller
                 }
             }
 
+            $this->marcarOrdenFacturada($venta->id_orden_pedido);
+
             DB::commit();
             return response()->json($venta, 201);
 
@@ -153,6 +159,12 @@ class VentaController extends Controller
 
         if ($venta->envio_sunat == 1) {
             return response()->json(['error' => 'No se puede editar una venta ya enviada a SUNAT'], 400);
+        }
+
+        $ordenAnterior = $venta->id_orden_pedido;
+        $ordenNueva = $request->id_orden_pedido ?? null;
+        if ($ordenNueva != $ordenAnterior && ($error = $this->validarOrdenDisponible($ordenNueva))) {
+            return response()->json(['error' => $error], 400);
         }
 
         DB::beginTransaction();
@@ -199,6 +211,11 @@ class VentaController extends Controller
                 }
             }
 
+            if ($ordenNueva != $ordenAnterior) {
+                $this->liberarOrden($ordenAnterior, $venta->id);
+                $this->marcarOrdenFacturada($ordenNueva);
+            }
+
             DB::commit();
             return response()->json($venta, 200);
 
@@ -214,8 +231,56 @@ class VentaController extends Controller
         if ($venta->envio_sunat == 1) {
             return response()->json(['error' => 'No se puede eliminar una venta ya enviada a SUNAT'], 400);
         }
+        $ordenId = $venta->id_orden_pedido;
+        $ventaId = $venta->id;
         $venta->delete();
+        $this->liberarOrden($ordenId, $ventaId);
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Una orden solo puede facturarse si existe y está Pendiente.
+     */
+    private function validarOrdenDisponible($idOrden): ?string
+    {
+        if (empty($idOrden)) {
+            return null;
+        }
+        $orden = DB::table('ordenes_pedido')->where('id', $idOrden)->first();
+        if (!$orden) {
+            return 'La orden de pedido seleccionada no existe.';
+        }
+        if ($orden->estado !== 'Pendiente') {
+            return 'La orden de pedido ' . ($orden->numero ?? $orden->id) . ' ya está ' . strtolower($orden->estado) . ' y no se puede volver a facturar.';
+        }
+        return null;
+    }
+
+    private function marcarOrdenFacturada($idOrden): void
+    {
+        if (!empty($idOrden)) {
+            DB::table('ordenes_pedido')->where('id', $idOrden)->update(['estado' => 'Facturada']);
+        }
+    }
+
+    /**
+     * Devuelve la orden a Pendiente si ya no queda ninguna venta vigente (no anulada) que la use.
+     */
+    private function liberarOrden($idOrden, $ventaExcluida = null): void
+    {
+        if (empty($idOrden)) {
+            return;
+        }
+        $enUso = Venta::where('id_orden_pedido', $idOrden)
+            ->where('estado', '!=', 'Anulada')
+            ->when($ventaExcluida, fn ($q) => $q->where('id', '!=', $ventaExcluida))
+            ->exists();
+        if (!$enUso) {
+            DB::table('ordenes_pedido')
+                ->where('id', $idOrden)
+                ->where('estado', 'Facturada')
+                ->update(['estado' => 'Pendiente']);
+        }
     }
 
     public function enviarSunat($id)
@@ -243,6 +308,15 @@ class VentaController extends Controller
                 $venta->igv = $sunatRes['totales']['igv'];
                 $venta->total = $sunatRes['totales']['total'];
                 $venta->save();
+
+                // Dejar las cuotas igual a como se enviaron a SUNAT
+                $idsEnviados = array_column($sunatRes['cuotas'], 'id');
+                foreach ($sunatRes['cuotas'] as $cuota) {
+                    \App\Models\VentaCuota::where('id', $cuota['id'])->update(['monto' => $cuota['monto']]);
+                }
+                if (!empty($sunatRes['cuotas'])) {
+                    \App\Models\VentaCuota::where('id_venta', $venta->id)->whereNotIn('id', $idsEnviados)->delete();
+                }
                 return response()->json(['success' => true, 'msg' => 'Factura enviada a SUNAT correctamente']);
             } else {
                 // sunat_hash es VARCHAR(255): el mensaje de SUNAT puede ser más largo
@@ -581,6 +655,9 @@ class VentaController extends Controller
                 $venta->motivo_anulacion = $request->motivo;
                 $venta->correlativo_nc = $serieNC . '-' . $correlativoNCNum;
                 $venta->save();
+
+                // La orden de pedido vuelve a quedar disponible para facturarse
+                $this->liberarOrden($venta->id_orden_pedido, $venta->id);
 
                 // Reponer stock de los productos vendidos e ingresar movimiento a Kardex
                 foreach ($detallesObj as $det) {

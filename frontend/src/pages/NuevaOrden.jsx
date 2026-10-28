@@ -18,6 +18,7 @@ const NuevaOrden = () => {
     id_cliente: '',
     fecha: new Date().toISOString().split('T')[0],
     fecha_vencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days later
+    aplica_igv: true,
     terminos_condiciones: 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'
   });
 
@@ -45,6 +46,7 @@ const NuevaOrden = () => {
           id_cliente: cot.id_cliente,
           fecha: cot.fecha,
           fecha_vencimiento: cot.fecha_vencimiento,
+          aplica_igv: cot.aplica_igv === undefined || cot.aplica_igv === null ? true : cot.aplica_igv == 1,
           terminos_condiciones: cot.terminos_condiciones || ''
         });
         
@@ -141,7 +143,7 @@ const NuevaOrden = () => {
   );
 
   const subtotal = detalles.reduce((acc, curr) => acc + curr.total, 0);
-  const igv = subtotal * 0.18;
+  const igv = formData.aplica_igv ? subtotal * 0.18 : 0;
   const total = subtotal + igv;
 
   const handleSubmit = async (e) => {
@@ -165,6 +167,7 @@ const NuevaOrden = () => {
 
       const payload = {
         ...formData,
+        aplica_igv: formData.aplica_igv ? 1 : 0,
         base_imponible: subtotal.toFixed(2),
         igv: igv.toFixed(2),
         total: total.toFixed(2),
@@ -499,12 +502,22 @@ const NuevaOrden = () => {
 
           <div className="w-full md:w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <h3 className="font-semibold text-gray-800 mb-4 pb-2 border-b">Resumen</h3>
+            <label htmlFor="aplica_igv" className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="aplica_igv"
+                checked={formData.aplica_igv}
+                onChange={(e) => setFormData({ ...formData, aplica_igv: e.target.checked })}
+                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Aplica IGV (18%)</span>
+            </label>
             <div className="flex justify-between mb-3 text-sm text-gray-600">
               <span>Base Imponible:</span>
               <span className="font-medium">S/ {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between mb-4 text-sm text-gray-600">
-              <span>IGV (18%):</span>
+              <span>{formData.aplica_igv ? 'IGV (18%):' : 'IGV (no aplica):'}</span>
               <span className="font-medium">S/ {igv.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center font-bold text-xl text-gray-900 border-t pt-4">

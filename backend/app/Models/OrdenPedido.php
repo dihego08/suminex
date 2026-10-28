@@ -16,6 +16,7 @@ class OrdenPedido extends Model
         'estado',
         'base_imponible',
         'igv',
+        'aplica_igv',
         'total',
         'terminos_condiciones'
     ];

@@ -7,7 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Cliente extends Model
 {
     protected $table = 'clientes';
-    
+
+    // estado: 1 = activo, 0 = eliminado (baja lógica, se conserva por los documentos asociados)
+    protected $attributes = [
+        'estado' => 1,
+    ];
+
+    public function scopeActivos($query)
+    {
+        return $query->where($this->getTable() . '.estado', 1);
+    }
+
     protected $fillable = [
         'razon_social',
         'ruc',

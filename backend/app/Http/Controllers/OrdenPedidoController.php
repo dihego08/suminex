@@ -61,6 +61,7 @@ class OrdenPedidoController extends Controller
                     'estado' => 'Pendiente',
                     'base_imponible' => $cotizacion->base_imponible,
                     'igv' => $cotizacion->igv,
+                    'aplica_igv' => $cotizacion->aplica_igv ?? 1,
                     'total' => $cotizacion->total,
                     'terminos_condiciones' => $cotizacion->terminos_condiciones
                 ]);
@@ -94,6 +95,7 @@ class OrdenPedidoController extends Controller
                     'estado' => 'Pendiente',
                     'base_imponible' => $request->base_imponible,
                     'igv' => $request->igv,
+                    'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                     'total' => $request->total,
                     'terminos_condiciones' => $request->terminos_condiciones
                 ]);
@@ -140,6 +142,7 @@ class OrdenPedidoController extends Controller
                 'fecha' => $request->fecha,
                 'base_imponible' => $request->base_imponible,
                 'igv' => $request->igv,
+                'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                 'total' => $request->total,
                 'terminos_condiciones' => $request->terminos_condiciones
             ]);

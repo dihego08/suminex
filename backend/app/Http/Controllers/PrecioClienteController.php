@@ -11,6 +11,7 @@ class PrecioClienteController extends Controller
     {
         $precios = PrecioCliente::with(['producto', 'cliente'])
             ->whereHas('producto', fn ($q) => $q->activos())
+            ->whereHas('cliente', fn ($q) => $q->activos())
             ->get();
         return response()->json($precios);
     }
