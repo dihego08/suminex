@@ -158,7 +158,10 @@ const NuevaVenta = () => {
         nombre: d.producto?.nombre,
         codigo: d.producto?.codigo,
         cantidad: d.cantidad,
-        precio: d.precio_unitario,
+        // precio_unitario se guarda sin IGV; si la venta se ingresó con IGV, se muestra con IGV
+        precio: v.incluye_igv == 1
+          ? Math.round(parseFloat(d.precio_unitario) * 1.18 * 100) / 100
+          : parseFloat(d.precio_unitario),
         nota: d.descripcion_personalizada || ''
       })));
 
@@ -246,13 +249,20 @@ const NuevaVenta = () => {
     }
 
     try {
-      const detallesFormateados = detalles.map(d => ({
-        id_producto: d.id_producto,
-        cantidad: d.cantidad,
-        precio_unitario: d.precio,
-        total: d.cantidad * d.precio,
-        descripcion_personalizada: d.nota
-      }));
+      // En BD y en SUNAT el precio_unitario es el valor unitario SIN IGV.
+      // Si el usuario ingresó precios con IGV, se convierten aquí.
+      const detallesFormateados = detalles.map(d => {
+        const valorUnitario = formData.incluye_igv
+          ? Math.round((d.precio / 1.18) * 1000000) / 1000000
+          : d.precio;
+        return {
+          id_producto: d.id_producto,
+          cantidad: d.cantidad,
+          precio_unitario: valorUnitario,
+          total: Math.round(d.cantidad * valorUnitario * 100) / 100,
+          descripcion_personalizada: d.nota
+        };
+      });
 
       const payload = {
         ...formData,

@@ -11,18 +11,27 @@ class ProductoController extends Controller
 {
     public function index()
     {
-        $productos = Producto::with(['preciosClientes.cliente', 'unidadesSecundarias'])->get();
+        $productos = Producto::activos()->with(['preciosClientes.cliente', 'unidadesSecundarias'])->get();
         return response()->json($productos);
     }
 
     public function show($id)
     {
-        $producto = Producto::with('preciosClientes.cliente')->findOrFail($id);
+        $producto = Producto::activos()->with('preciosClientes.cliente')->findOrFail($id);
         return response()->json($producto);
     }
 
     public function store(Request $request)
     {
+        // El código es único en BD también para productos dados de baja
+        $eliminado = Producto::where('codigo', $request->codigo)->where('estado', 0)->exists();
+        if ($eliminado) {
+            return response()->json([
+                'message' => 'El código ya pertenece a un producto eliminado.',
+                'errors' => ['codigo' => ['El código "' . $request->codigo . '" ya pertenece a un producto eliminado. Use otro código.']],
+            ], 422);
+        }
+
         $this->validate($request, [
             'codigo' => 'required|unique:productos',
             'descripcion' => 'nullable|string',
@@ -32,6 +41,7 @@ class ProductoController extends Controller
         ]);
 
         $data = $this->prepararDatos($request);
+        $data['estado'] = 1;
 
         DB::beginTransaction();
         try {
@@ -63,7 +73,7 @@ class ProductoController extends Controller
 
     public function update(Request $request, $id)
     {
-        $producto = Producto::findOrFail($id);
+        $producto = Producto::activos()->findOrFail($id);
 
         $this->validate($request, [
             'codigo' => 'required|unique:productos,codigo,' . $producto->id,
@@ -114,7 +124,7 @@ class ProductoController extends Controller
      */
     private function prepararDatos(Request $request): array
     {
-        $data = $request->except(['unidades_secundarias', 'imagen', 'ficha_tecnica', '_method']);
+        $data = $request->except(['unidades_secundarias', 'imagen', 'ficha_tecnica', '_method', 'estado']);
 
         $data['descripcion'] = $request->input('descripcion') ?? '';
 
@@ -140,11 +150,11 @@ class ProductoController extends Controller
 
     public function destroy($id)
     {
-        try {
-            Producto::destroy($id);
-            return response()->json(['message' => 'Producto eliminado con éxito']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'No se puede eliminar el producto porque está siendo usado en otros registros.'], 500);
-        }
+        // Baja lógica: el producto se conserva para el historial (ventas, compras, kardex, etc.)
+        $producto = Producto::activos()->findOrFail($id);
+        $producto->estado = 0;
+        $producto->save();
+
+        return response()->json(['message' => 'Producto eliminado con éxito']);
     }
 }

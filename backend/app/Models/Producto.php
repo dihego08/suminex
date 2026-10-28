@@ -7,7 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Producto extends Model
 {
     protected $table = 'productos';
-    
+
+    // estado: 1 = activo, 0 = eliminado (baja lógica, nunca se borra físicamente)
+    protected $attributes = [
+        'estado' => 1,
+    ];
+
+    public function scopeActivos($query)
+    {
+        return $query->where($this->getTable() . '.estado', 1);
+    }
+
     protected $fillable = [
         'codigo',
         'descripcion',

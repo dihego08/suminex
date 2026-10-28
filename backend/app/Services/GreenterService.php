@@ -50,10 +50,46 @@ class GreenterService
 
     public function emitirFactura($venta, $cliente, $detalles)
     {
+        $numDoc = trim((string) ($cliente->ruc ?? ''));
         $client = (new Client())
-            ->setTipoDoc('6') // 6: RUC, 1: DNI
-            ->setNumDoc($cliente->ruc ?? '00000000') // Adjust mapping based on DNI/RUC
+            ->setTipoDoc(strlen($numDoc) === 8 ? '1' : '6') // 6: RUC, 1: DNI
+            ->setNumDoc($numDoc !== '' ? $numDoc : '00000000')
             ->setRznSocial($cliente->razon_social);
+
+        // Las líneas y los totales se calculan desde el detalle para que cuadren siempre
+        // (SUNAT valida: suma de valor venta de líneas - descuento global = op. gravadas).
+        $items = [];
+        $sumaValorLineas = 0;
+        $sumaIgvLineas = 0;
+        foreach ($detalles as $d) {
+            $cantidad = (float) $d->cantidad;
+            $valorUnitario = (float) $d->precio_unitario; // sin IGV
+            $valorLinea = round($cantidad * $valorUnitario, 2);
+            $igvLinea = round($valorLinea * 0.18, 2);
+
+            $items[] = (new SaleDetail())
+                ->setCodProducto($d->id_producto)
+                ->setUnidad('NIU') // Asumir Unidad estándar
+                ->setDescripcion($d->descripcion_personalizada ?: $d->producto->nombre)
+                ->setCantidad($cantidad)
+                ->setMtoValorUnitario(round($valorUnitario, 6))
+                ->setMtoValorVenta($valorLinea)
+                ->setMtoBaseIgv($valorLinea)
+                ->setPorcentajeIgv(18)
+                ->setIgv($igvLinea)
+                ->setTipAfeIgv('10')
+                ->setTotalImpuestos($igvLinea)
+                ->setMtoPrecioUnitario($cantidad > 0 ? round(($valorLinea + $igvLinea) / $cantidad, 2) : 0);
+
+            $sumaValorLineas += $valorLinea;
+            $sumaIgvLineas += $igvLinea;
+        }
+        $sumaValorLineas = round($sumaValorLineas, 2);
+
+        $descuento = min(round((float) $venta->descuento, 2), $sumaValorLineas);
+        $gravadas = round($sumaValorLineas - $descuento, 2);
+        $igvTotal = $descuento > 0 ? round($gravadas * 0.18, 2) : round($sumaIgvLineas, 2);
+        $totalVenta = round($gravadas + $igvTotal, 2);
 
         $invoice = (new Invoice())
             ->setUblVersion('2.1')
@@ -67,12 +103,12 @@ class GreenterService
             ->setCompany($this->company)
             ->setClient($client)
             ->setMtoOperExoneradas(0)
-            ->setMtoIGV($venta->igv)
-            ->setMtoOperGravadas($venta->subtotal)
-            ->setTotalImpuestos($venta->igv)
-            ->setValorVenta($venta->subtotal)
-            ->setSubTotal($venta->total)
-            ->setMtoImpVenta($venta->total);
+            ->setMtoIGV($igvTotal)
+            ->setMtoOperGravadas($gravadas)
+            ->setTotalImpuestos($igvTotal)
+            ->setValorVenta($sumaValorLineas)
+            ->setSubTotal($totalVenta)
+            ->setMtoImpVenta($totalVenta);
 
         if ($venta->id_forma_pago == 2 && $venta->cuotas && count($venta->cuotas) > 0) {
             $montoNetoPendiente = $venta->cuotas->sum('monto');
@@ -88,33 +124,14 @@ class GreenterService
             $invoice->setFormaPago(new FormaPagoContado());
         }
 
-        if ($venta->descuento > 0) {
+        if ($descuento > 0) {
             $invoice->setDescuentos([
                 (new Charge())
-                    ->setCodTipo('02') // Descuento global
-                    ->setMontoBase($venta->descuento) // o subtotal dependiendo de la regla (Greenter pide monto)
-                    ->setFactor(1)
-                    ->setMonto($venta->descuento)
+                    ->setCodTipo('02') // Descuento global que afecta la base imponible
+                    ->setMontoBase($sumaValorLineas)
+                    ->setFactor(round($descuento / $sumaValorLineas, 5))
+                    ->setMonto($descuento)
             ]);
-        }
-
-        $items = [];
-        foreach ($detalles as $d) {
-            $item = (new SaleDetail())
-                ->setCodProducto($d->id_producto)
-                ->setUnidad('NIU') // Asumir Unidad estándar
-                ->setDescripcion($d->descripcion_personalizada ?? $d->producto->nombre)
-                ->setCantidad($d->cantidad)
-                ->setMtoValorUnitario($d->precio_unitario)
-                ->setMtoValorVenta($d->cantidad * $d->precio_unitario)
-                ->setMtoBaseIgv($d->cantidad * $d->precio_unitario)
-                ->setPorcentajeIgv(18)
-                ->setIgv(number_format(($d->cantidad * $d->precio_unitario) * 0.18, 2, ".", ""))
-                ->setTipAfeIgv('10')
-                ->setTotalImpuestos(number_format(($d->cantidad * $d->precio_unitario) * 0.18, 2, ".", ""))
-                ->setMtoPrecioUnitario(number_format(($d->cantidad * $d->precio_unitario) * 1.18 / $d->cantidad, 2, ".", ""));
-
-            $items[] = $item;
         }
 
         // Add legends (e.g. monto en letras)
@@ -122,7 +139,7 @@ class GreenterService
             ->setLegends([
                 (new Legend())
                     ->setCode('1000')
-                    ->setValue($this->getMontoEnLetras($venta->total))
+                    ->setValue(PdfComprobanteHelper::montoEnLetras($totalVenta, $venta->moneda))
             ]);
 
         $res = $this->see->send($invoice);
@@ -160,7 +177,8 @@ class GreenterService
             'fileName' => $fileName,
             'errorMsg' => $errorMsg,
             'xml_path' => 'greenter/' . $fileName . '.xml',
-            'cdr_path' => $res->isSuccess() ? 'greenter/R-' . $fileName . '.zip' : null
+            'cdr_path' => $res->isSuccess() ? 'greenter/R-' . $fileName . '.zip' : null,
+            'totales' => ['subtotal' => $gravadas, 'igv' => $igvTotal, 'total' => $totalVenta],
         ];
     }
 

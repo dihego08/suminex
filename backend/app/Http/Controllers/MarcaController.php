@@ -22,6 +22,7 @@ class MarcaController extends Controller
         $conteo = DB::table('productos')
             ->select('marca', DB::raw('COUNT(*) as total'))
             ->whereNotNull('marca')
+            ->where('estado', 1)
             ->groupBy('marca')
             ->pluck('total', 'marca');
 
@@ -102,7 +103,7 @@ class MarcaController extends Controller
             return response()->json(['error' => 'Marca no encontrada'], 404);
         }
 
-        $enUso = DB::table('productos')->where('marca', $marca->name)->count();
+        $enUso = DB::table('productos')->where('marca', $marca->name)->where('estado', 1)->count();
         if ($enUso > 0) {
             return response()->json([
                 'error' => "No se puede eliminar la marca porque tiene {$enUso} producto(s) asociado(s).",

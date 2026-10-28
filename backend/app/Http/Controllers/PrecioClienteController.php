@@ -9,7 +9,9 @@ class PrecioClienteController extends Controller
 {
     public function index()
     {
-        $precios = PrecioCliente::with(['producto', 'cliente'])->get();
+        $precios = PrecioCliente::with(['producto', 'cliente'])
+            ->whereHas('producto', fn ($q) => $q->activos())
+            ->get();
         return response()->json($precios);
     }
 

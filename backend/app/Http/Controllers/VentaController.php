@@ -237,14 +237,20 @@ class VentaController extends Controller
                 $venta->envio_sunat = 1;
                 $venta->xml_path = $sunatRes['xml_path'];
                 $venta->cdr_path = $sunatRes['cdr_path'];
+                $venta->sunat_hash = null;
+                // Los montos del comprobante aceptado son los oficiales (pueden diferir en céntimos por redondeo)
+                $venta->subtotal = $sunatRes['totales']['subtotal'];
+                $venta->igv = $sunatRes['totales']['igv'];
+                $venta->total = $sunatRes['totales']['total'];
                 $venta->save();
                 return response()->json(['success' => true, 'msg' => 'Factura enviada a SUNAT correctamente']);
             } else {
-                $venta->sunat_hash = 'ERROR: ' . $sunatRes['errorMsg'];
+                // sunat_hash es VARCHAR(255): el mensaje de SUNAT puede ser más largo
+                $venta->sunat_hash = mb_substr('ERROR: ' . $sunatRes['errorMsg'], 0, 255);
                 $venta->save();
                 return response()->json(['error' => 'Rechazado por SUNAT', 'msg' => $sunatRes['errorMsg']], 400);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Error al enviar a SUNAT', 'msg' => $e->getMessage()], 500);
         }
     }

@@ -13,7 +13,7 @@ class InventarioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Producto::query();
+        $query = Producto::activos();
 
         if ($request->has('search') && !empty($request->search)) {
             $s = trim($request->search);
@@ -37,10 +37,10 @@ class InventarioController extends Controller
 
         // Estadísticas generales para los KPI cards
         $stats = [
-            'total_productos' => Producto::count(),
-            'valor_inventario' => (float)Producto::selectRaw('SUM(stock * precio_compra) as total')->value('total') ?? 0,
-            'bajo_stock' => Producto::whereRaw('stock > 0 AND stock <= stock_minimo')->count(),
-            'sin_stock' => Producto::whereRaw('stock <= 0')->count(),
+            'total_productos' => Producto::activos()->count(),
+            'valor_inventario' => (float)Producto::activos()->selectRaw('SUM(stock * precio_compra) as total')->value('total') ?? 0,
+            'bajo_stock' => Producto::activos()->whereRaw('stock > 0 AND stock <= stock_minimo')->count(),
+            'sin_stock' => Producto::activos()->whereRaw('stock <= 0')->count(),
         ];
 
         $perPage = $request->get('per_page', 20);

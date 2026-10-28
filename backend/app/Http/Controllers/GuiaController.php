@@ -105,7 +105,8 @@ class GuiaController extends Controller
     public function searchProducts(Request $request)
     {
         $query = DB::table('productos as p')
-            ->select('p.id', 'p.nombre as name', 'p.codigo as code', 'p.precio_base as price_in', 'p.unidad_medida as unit', 'p.peso as weight');
+            ->select('p.id', 'p.nombre as name', 'p.codigo as code', 'p.precio_base as price_in', 'p.unidad_medida as unit', 'p.peso as weight')
+            ->where('p.estado', 1);
 
         if ($request->filled('nombre')) {
             $query->where('p.nombre', 'like', '%' . $request->nombre . '%');
