@@ -182,13 +182,21 @@ class GuiaController extends Controller
 
     public function sendToSunat($id, GuiaRemisionService $service)
     {
-        $resultado = $service->procesarGuia($id);
+        return $this->respuestaSunat($service->enviarGuia((int) $id));
+    }
 
-        if (isset($resultado['Result']) && $resultado['Result'] === 'OK') {
-            return response()->json($resultado);
-        }
+    public function checkSunatStatus($id, GuiaRemisionService $service)
+    {
+        return $this->respuestaSunat($service->consultarGuia((int) $id));
+    }
 
-        return response()->json($resultado, 500);
+    /**
+     * OK y PENDIENTE responden 200 (PENDIENTE = el frontend debe volver a consultar); ERROR responde 500.
+     */
+    private function respuestaSunat(array $resultado)
+    {
+        $result = $resultado['Result'] ?? 'ERROR';
+        return response()->json($resultado, in_array($result, ['OK', 'PENDIENTE'], true) ? 200 : 500);
     }
 
     public function update(Request $request, $id)
@@ -198,10 +206,10 @@ class GuiaController extends Controller
             return response()->json(['Result' => 'ERROR', 'Message' => 'Guía de remisión no encontrada'], 404);
         }
 
-        if ($guia->estado == 1) {
+        if ($guia->estado != 0) {
             return response()->json([
                 'Result' => 'ERROR',
-                'Message' => 'No se puede editar una guía que ya ha sido emitida o aceptada por SUNAT'
+                'Message' => 'No se puede editar una guía enviada a SUNAT (aceptada o en proceso)'
             ], 422);
         }
 
@@ -269,10 +277,10 @@ class GuiaController extends Controller
             return response()->json(['Result' => 'ERROR', 'Message' => 'Guía no encontrada'], 404);
         }
 
-        if ($guia->estado == 1) {
+        if ($guia->estado != 0) {
             return response()->json([
                 'Result' => 'ERROR',
-                'Message' => 'No se puede eliminar una guía que ya ha sido emitida o aceptada por SUNAT'
+                'Message' => 'No se puede eliminar una guía enviada a SUNAT (aceptada o en proceso)'
             ], 422);
         }
 

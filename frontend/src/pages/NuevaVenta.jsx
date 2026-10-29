@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { fechaLocal } from '../utils/fecha';
 import axios from 'axios';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search, Package, User, Calendar, Receipt, FileText } from 'lucide-react';
@@ -21,8 +22,8 @@ const NuevaVenta = () => {
     tipo_documento: '01',
     serie: 'F001',
     correlativo: '',
-    fecha_emision: new Date().toISOString().split('T')[0],
-    fecha_vencimiento: new Date().toISOString().split('T')[0],
+    fecha_emision: fechaLocal(),
+    fecha_vencimiento: fechaLocal(),
     terminos_condiciones: '',
     descuento: 0,
     desc_descuento: '',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { fechaLocal } from '../utils/fecha';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Plus, Trash2, ArrowLeft, Receipt, Calendar, User, FileText, Image as ImageIcon, Search } from 'lucide-react';
@@ -16,8 +17,8 @@ const NuevaCotizacion = () => {
 
   const [formData, setFormData] = useState({
     id_cliente: '',
-    fecha: new Date().toISOString().split('T')[0],
-    fecha_vencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days later
+    fecha: fechaLocal(),
+    fecha_vencimiento: fechaLocal(7), // 7 days later
     aplica_igv: true,
     terminos_condiciones: 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'
   });

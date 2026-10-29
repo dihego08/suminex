@@ -8,7 +8,7 @@
     "require": {
         "php": "^8.3",
         "dompdf/dompdf": "^3.1",
-        "greenter/greenter": "^4.3",
+        "greenter/greenter": "^5.3",
         "greenter/ws": "*",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",

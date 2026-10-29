@@ -21,7 +21,14 @@ class GuiaRemisionService
 {
     private const RUC_EMPRESA = '20615095932';
     private const RAZON_SOCIAL_EMPRESA = 'CORPORACION DE SERVICIOS MULTIPLES SUMINEX S.A.C.';
-    private const SLEEP_TIME = 60;
+    // guia_cabecera.estado
+    public const ESTADO_NO_ENVIADA = 0;
+    public const ESTADO_ACEPTADA = 1;
+    public const ESTADO_EN_PROCESO = 2;
+
+    private const CODIGO_EN_PROCESO = '98';     // respuesta de SUNAT mientras procesa el ticket
+    private const INTENTOS_ENVIO = 3;           // consultas dentro de la misma petición de envío
+    private const ESPERA_ENTRE_CONSULTAS = 5;   // segundos
 
     public function createSee(): \Greenter\Api
     {
@@ -45,18 +52,25 @@ class GuiaRemisionService
         return $api;
     }
 
-    public function procesarGuia(int $idGuia): array
+    /**
+     * Paso 1: envía la guía a SUNAT y guarda el ticket de inmediato (estado = 2, "en proceso").
+     * Luego intenta consultar el ticket unos pocos segundos; si SUNAT aún no responde,
+     * devuelve PENDIENTE y el frontend sigue consultando con consultarGuia().
+     * Así ninguna petición HTTP dura más de ~20 s (antes dormía 60 s y el hosting cortaba con 504).
+     */
+    public function enviarGuia(int $idGuia): array
     {
         try {
-            DB::statement("SET SESSION wait_timeout = 120");
-            DB::statement("SET SESSION interactive_timeout = 120");
-
-            DB::beginTransaction();
-
             $guia = $this->obtenerGuia($idGuia);
             if (!$guia) {
-                DB::rollBack();
                 return ['Result' => 'ERROR', 'Message' => 'Guía no encontrada'];
+            }
+            if ((int) $guia['estado'] === self::ESTADO_ACEPTADA) {
+                return ['Result' => 'OK', 'Message' => 'La guía ya fue aceptada por SUNAT.'];
+            }
+            // Ya se envió antes y tiene ticket: no reenviar, solo consultar
+            if ((int) $guia['estado'] === self::ESTADO_EN_PROCESO && !empty($guia['ticket'])) {
+                return $this->consultarGuia($idGuia);
             }
 
             $despatch = $this->construirDespatch($guia, $idGuia);
@@ -66,58 +80,116 @@ class GuiaRemisionService
             $this->saveXml($despatch, $api->getLastXml());
 
             if (!$res->isSuccess()) {
-                $errorMsg = $res->getError()->getMessage();
+                $errorMsg = $res->getError()->getCode() . ' - ' . $res->getError()->getMessage();
                 $this->guardarRespuestaSunat($idGuia, $errorMsg);
-                DB::commit();
                 return ['Result' => 'ERROR', 'Message' => $errorMsg];
             }
 
+            // Guardar el ticket ANTES de esperar: si algo se corta, la guía se puede seguir consultando
             $ticket = $res->getTicket();
+            DB::table('guia_cabecera')->where('id', $idGuia)->update([
+                'estado' => self::ESTADO_EN_PROCESO,
+                'ticket' => $ticket,
+            ]);
 
-            sleep(self::SLEEP_TIME);
+            return $this->consultarTicket($idGuia, $api, $ticket, self::INTENTOS_ENVIO);
+        } catch (\Throwable $e) {
+            return $this->manejarExcepcion($idGuia, $e);
+        }
+    }
+
+    /**
+     * Paso 2: consulta el ticket guardado. Se llama desde el frontend cada pocos segundos
+     * mientras la respuesta sea PENDIENTE.
+     */
+    public function consultarGuia(int $idGuia): array
+    {
+        try {
+            $guia = $this->obtenerGuia($idGuia);
+            if (!$guia) {
+                return ['Result' => 'ERROR', 'Message' => 'Guía no encontrada'];
+            }
+            if ((int) $guia['estado'] === self::ESTADO_ACEPTADA) {
+                return ['Result' => 'OK', 'Message' => 'La guía ya fue aceptada por SUNAT.'];
+            }
+            if (empty($guia['ticket'])) {
+                return ['Result' => 'ERROR', 'Message' => 'La guía no tiene ticket de SUNAT. Envíela primero.'];
+            }
+
+            return $this->consultarTicket($idGuia, $this->createSee(), $guia['ticket'], 1);
+        } catch (\Throwable $e) {
+            return $this->manejarExcepcion($idGuia, $e);
+        }
+    }
+
+    private function consultarTicket(int $idGuia, \Greenter\Api $api, string $ticket, int $intentos): array
+    {
+        $res = null;
+        for ($i = 0; $i < $intentos; $i++) {
+            if ($i > 0) {
+                sleep(self::ESPERA_ENTRE_CONSULTAS);
+            }
             $res = $api->getStatus($ticket);
-
-            if (!$res->isSuccess()) {
-                $errorMsg = $res->getError()->getMessage();
-                $this->guardarRespuestaSunat($idGuia, $errorMsg);
-                DB::commit();
-                return ['Result' => 'ERROR', 'Message' => $errorMsg];
+            if ($res->getCode() !== self::CODIGO_EN_PROCESO) {
+                break;
             }
+        }
 
-            $cdr = $res->getCdrResponse();
-            $this->saveCdr($despatch, $res->getCdrZip());
+        if ($res->getCode() === self::CODIGO_EN_PROCESO) {
+            return [
+                'Result' => 'PENDIENTE',
+                'Message' => 'SUNAT aún está procesando la guía (ticket ' . $ticket . ').',
+                'ticket' => $ticket,
+            ];
+        }
 
-            if ($cdr->isAccepted()) {
-                $this->actualizarGuiaAceptada($idGuia, $ticket);
-                $respuesta = $this->formatearRespuestaCdr($cdr);
-                $this->guardarRespuestaSunat($idGuia, $respuesta);
-
-                DB::commit();
-
-                return ['Result' => 'OK', 'Message' => $cdr->getDescription()];
-            } else {
-                $errorMsg = $this->formatearRespuestaCdr($cdr);
-                $this->guardarRespuestaSunat($idGuia, $errorMsg);
-
-                DB::commit();
-
-                return ['Result' => 'ERROR', 'Message' => $errorMsg];
-            }
-        } catch (\Exception $e) {
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
-
-            $errorMsg = "Excepción: " . $e->getMessage() . " | Línea: " . $e->getLine();
-
-            try {
-                $this->guardarRespuestaSunat($idGuia, $errorMsg);
-            } catch (\Exception $saveException) {
-                \Illuminate\Support\Facades\Log::error("No se pudo guardar error en BD: " . $saveException->getMessage());
-            }
-
+        if (!$res->isSuccess()) {
+            $errorMsg = $res->getError()->getCode() . ' - ' . $res->getError()->getMessage();
+            $this->guardarRespuestaSunat($idGuia, $errorMsg);
+            $this->marcarGuiaRechazada($idGuia);
             return ['Result' => 'ERROR', 'Message' => $errorMsg];
         }
+
+        $cdr = $res->getCdrResponse();
+        $guia = $this->obtenerGuia($idGuia);
+        $this->saveCdrPorNumero($guia['num_guia'], $res->getCdrZip());
+        $respuesta = $this->formatearRespuestaCdr($cdr);
+        $this->guardarRespuestaSunat($idGuia, $respuesta);
+
+        if ($cdr->isAccepted()) {
+            $this->actualizarGuiaAceptada($idGuia, $ticket);
+            return ['Result' => 'OK', 'Message' => $cdr->getDescription()];
+        }
+
+        $this->marcarGuiaRechazada($idGuia);
+        return ['Result' => 'ERROR', 'Message' => $respuesta];
+    }
+
+    /**
+     * Rechazada: vuelve a "no enviada" para poder corregirla y reenviarla.
+     */
+    private function marcarGuiaRechazada(int $idGuia): void
+    {
+        DB::table('guia_cabecera')->where('id', $idGuia)->update([
+            'estado' => self::ESTADO_NO_ENVIADA,
+            'ticket' => null,
+        ]);
+    }
+
+    private function manejarExcepcion(int $idGuia, \Throwable $e): array
+    {
+        $errorMsg = "Excepción: " . $e->getMessage() . " | Línea: " . $e->getLine();
+        $this->guardarRespuestaSunat($idGuia, $errorMsg);
+        return ['Result' => 'ERROR', 'Message' => $errorMsg];
+    }
+
+    /**
+     * Greenter escribe las fechas del XML en hora de Perú. Si la fecha (sin hora) se crea en la
+     * zona del servidor (UTC), medianoche UTC pasa a ser las 19:00 del día ANTERIOR en Lima.
+     */
+    private function fechaPeru(?string $fecha): DateTime
+    {
+        return new DateTime($fecha ?? 'now', new \DateTimeZone('America/Lima'));
     }
 
     private function obtenerGuia(int $idGuia): ?array
@@ -142,7 +214,7 @@ class GuiaRemisionService
             ->setTipoDoc('09')
             ->setSerie($serie)
             ->setCorrelativo($correlativo)
-            ->setFechaEmision(new DateTime($guia['fecha_emision']))
+            ->setFechaEmision($this->fechaPeru($guia['fecha_emision']))
             ->setCompany($company)
             ->setDestinatario((new Client())
                 ->setTipoDoc('6')
@@ -163,7 +235,7 @@ class GuiaRemisionService
         $envio = (new Shipment())
             ->setCodTraslado($guia['motivo_traslado'])
             ->setModTraslado($guia['modalidad_trasnporte'])
-            ->setFecTraslado(new DateTime($guia['fecha_traslado']))
+            ->setFecTraslado($this->fechaPeru($guia['fecha_traslado']))
             ->setPesoTotal(floatval($totalPeso))
             ->setUndPesoTotal('KGM');
 
@@ -332,12 +404,17 @@ class GuiaRemisionService
         file_put_contents($path . DIRECTORY_SEPARATOR . $despatch->getName() . '.xml', $xml);
     }
 
-    private function saveCdr(Despatch $despatch, ?string $zip): void
+    /**
+     * Guarda el CDR con el mismo nombre que genera Greenter (RUC-09-SERIE-CORRELATIVO).
+     */
+    private function saveCdrPorNumero(string $numGuia, ?string $zip): void
     {
         $path = storage_path('app/sunat/guias/cdr');
         if (!file_exists($path)) {
             mkdir($path, 0755, true);
         }
-        file_put_contents($path . DIRECTORY_SEPARATOR . 'R-' . $despatch->getName() . '.zip', $zip);
+        [$serie, $correlativo] = array_pad(explode('-', $numGuia, 2), 2, '');
+        $nombre = self::RUC_EMPRESA . '-09-' . trim($serie) . '-' . trim($correlativo);
+        file_put_contents($path . DIRECTORY_SEPARATOR . 'R-' . $nombre . '.zip', $zip);
     }
 }

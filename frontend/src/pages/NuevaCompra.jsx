@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fechaLocal } from '../utils/fecha';
 import axios from 'axios';
 import { ShoppingCart, Plus, Trash2, ArrowLeft, Save, Search, AlertCircle, Building2, Package } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -17,7 +18,7 @@ const NuevaCompra = () => {
   const [tipoDocumento, setTipoDocumento] = useState('1'); // 1: Factura, 2: Boleta, etc.
   const [serie, setSerie] = useState('');
   const [numeracion, setNumeracion] = useState('');
-  const [fechaCreacion, setFechaCreacion] = useState(new Date().toISOString().substring(0, 10));
+  const [fechaCreacion, setFechaCreacion] = useState(fechaLocal());
   const [incluyeIgv, setIncluyeIgv] = useState(true);
 
   // Item to add state

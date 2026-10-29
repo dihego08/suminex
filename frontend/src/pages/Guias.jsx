@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { SERVER_URL } from '../config';
-import { Search, Eye, Trash2, FileText, Truck, X, Download, Edit } from 'lucide-react';
+import { Search, Eye, Trash2, FileText, Truck, X, Download, Edit, RefreshCw } from 'lucide-react';
 
 export default function GuiasView() {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ export default function GuiasView() {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [sendingSunatId, setSendingSunatId] = useState(null);
+  const [sunatMsg, setSunatMsg] = useState('');
 
   // Detail modal
   const [showDetail, setShowDetail] = useState(false);
@@ -71,25 +72,42 @@ export default function GuiasView() {
     }
   };
 
-  const handleSendSunat = async (id) => {
-    if (!window.confirm('¿Enviar esta guía a SUNAT?')) return;
+  // El envío se hace en dos pasos para no superar el tiempo límite del servidor:
+  // 1) POST send-sunat envía la guía y devuelve el ticket (o PENDIENTE si SUNAT aún procesa)
+  // 2) mientras sea PENDIENTE, se consulta GET sunat-status cada pocos segundos
+  const MAX_CONSULTAS = 12;
+  const ESPERA_CONSULTA_MS = 5000;
+
+  const handleSendSunat = async (id, soloConsultar = false) => {
+    if (!soloConsultar && !window.confirm('¿Enviar esta guía a SUNAT?')) return;
     setSendingSunatId(id);
+    setSunatMsg(soloConsultar ? 'Consultando el estado en SUNAT...' : 'Enviando la guía a SUNAT...');
     try {
-      const response = await axios.post(`${SERVER_URL}/api/guias/${id}/send-sunat`);
-      if (response.data.Result === 'ERROR') {
-        alert(`Error de SUNAT:\n${response.data.Message || 'Error desconocido.'}`);
+      let response = soloConsultar
+        ? await axios.get(`${SERVER_URL}/api/guias/${id}/sunat-status`)
+        : await axios.post(`${SERVER_URL}/api/guias/${id}/send-sunat`);
+
+      for (let i = 1; response.data.Result === 'PENDIENTE' && i <= MAX_CONSULTAS; i++) {
+        setSunatMsg(`SUNAT está procesando la guía. Consultando nuevamente (${i}/${MAX_CONSULTAS})...`);
+        await new Promise((resolve) => setTimeout(resolve, ESPERA_CONSULTA_MS));
+        response = await axios.get(`${SERVER_URL}/api/guias/${id}/sunat-status`);
+      }
+
+      if (response.data.Result === 'PENDIENTE') {
+        alert('SUNAT recibió la guía pero aún no termina de procesarla.\nUse el botón "Consultar estado en SUNAT" en unos minutos.');
       } else {
-        alert(response.data.Message || 'Guía enviada a SUNAT exitosamente.');
-        fetchGuias();
-        if (detailData?.cabecera?.id === id) {
-          handleViewDetail(id, detailData.numGuia);
-        }
+        alert(response.data.Message || 'Guía aceptada por SUNAT.');
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.Message || 'Error de red o servidor enviando la guía.');
+      alert(`Error de SUNAT:\n${error.response?.data?.Message || 'Error de red o servidor al comunicarse con SUNAT.'}`);
     } finally {
       setSendingSunatId(null);
+      setSunatMsg('');
+      fetchGuias();
+      if (detailData?.cabecera?.id === id) {
+        handleViewDetail(id, detailData.numGuia);
+      }
     }
   };
 
@@ -98,6 +116,13 @@ export default function GuiasView() {
       return (
         <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
           Emitida
+        </span>
+      );
+    }
+    if (estado == 2) {
+      return (
+        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
+          En proceso
         </span>
       );
     }
@@ -242,7 +267,7 @@ export default function GuiasView() {
                     >
                       <FileText size={16} />
                     </a>
-                    {g.estado != 1 && (
+                    {g.estado == 0 && (
                       <button
                         onClick={() => navigate(`/guias/${g.id}/edit`)}
                         className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
@@ -251,7 +276,7 @@ export default function GuiasView() {
                         <Edit size={16} />
                       </button>
                     )}
-                    {g.estado != 1 && (
+                    {g.estado == 0 && (
                       <button
                         onClick={() => handleSendSunat(g.id)}
                         disabled={sendingSunatId === g.id}
@@ -261,7 +286,17 @@ export default function GuiasView() {
                         <Download size={16} />
                       </button>
                     )}
-                    {g.estado != 1 && (
+                    {g.estado == 2 && (
+                      <button
+                        onClick={() => handleSendSunat(g.id, true)}
+                        disabled={sendingSunatId === g.id}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Consultar estado en SUNAT"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                    )}
+                    {g.estado == 0 && (
                       <button
                         onClick={() => handleDelete(g.id)}
                         className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -292,7 +327,7 @@ export default function GuiasView() {
             <div className="mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">Enviando a SUNAT</h3>
             <p className="text-sm text-gray-500">
-              Por favor, espere. Este proceso demora aproximadamente 60 segundos debido a la generación del ticket y respuesta de SUNAT.
+              {sunatMsg || 'Por favor, espere mientras SUNAT procesa la guía.'}
             </p>
           </div>
         </div>
@@ -426,7 +461,7 @@ export default function GuiasView() {
                   Ver PDF
                 </a>
               )}
-              {detailData?.cabecera?.estado != 1 && detailData?.cabecera?.id && (
+              {detailData?.cabecera?.estado == 0 && detailData?.cabecera?.id && (
                 <button
                   onClick={() => {
                     setShowDetail(false);

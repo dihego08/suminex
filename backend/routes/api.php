@@ -132,3 +132,4 @@ Route::get('/', function () {
     Route::delete('guias/{id}', [GuiaController::class, 'destroy']);
     Route::get('guias/{id}/pdf', [GuiaPdfController::class, 'downloadGuiaPdf']);
     Route::post('guias/{id}/send-sunat', [GuiaController::class, 'sendToSunat']);
+    Route::get('guias/{id}/sunat-status', [GuiaController::class, 'checkSunatStatus']);

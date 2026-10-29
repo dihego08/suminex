@@ -147,8 +147,6 @@ const MOTIVOS = [
   { value: '17', label: 'TPT | Traslado para transformación' },
 ];
 
-const TALLAS = ['2', '4', '6', '8', '10', '12', '14', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
-
 function cleanHtmlDescription(html) {
   if (!html || typeof html !== 'string') return '';
   if (!html.includes('<')) return html;
@@ -192,73 +190,6 @@ function cleanHtmlDescription(html) {
   }
 }
 
-function parseDescriptionAndTallas(desc, totalCant) {
-  let baseName = desc || '';
-  let tallasArray = Array(13).fill('');
-  let manualCant = '';
-
-  if (!desc) return { baseName: '', tallasArray, manualCant: String(totalCant || '1') };
-
-  // Case 1: HTML Table
-  if (desc.includes('<table')) {
-    const parts = desc.split(/<table/i);
-    baseName = parts[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    baseName = baseName.replace(/\s*TALLAS\s*$/i, '').trim();
-
-    const tablePart = '<table' + parts[1];
-    const rows = tablePart.match(/<tr[\s\S]*?<\/tr>/gi) || [];
-    if (rows.length >= 2) {
-      const getCells = (r) =>
-        (r.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []).map((c) =>
-          c.replace(/<[^>]+>/g, '').trim()
-        );
-      const r1 = getCells(rows[0]);
-      const r2 = getCells(rows[1]);
-      const len = Math.max(r1.length, r2.length);
-      let matchedAny = false;
-      for (let i = 0; i < len; i++) {
-        const t = (r1[i] || '').toUpperCase();
-        const c = r2[i] || '';
-        const idx = TALLAS.findIndex((x) => x.toUpperCase() === t);
-        if (idx !== -1 && c) {
-          tallasArray[idx] = c;
-          matchedAny = true;
-        } else if (!t && c) {
-          manualCant = c;
-        }
-      }
-      if (!matchedAny && !manualCant) manualCant = String(totalCant || '1');
-    }
-    return { baseName, tallasArray, manualCant };
-  }
-
-  // Case 2: Bracket format [M:2, L:3] or [2:5]
-  const match = desc.match(/^(.*?)\[(.*?)\]\s*$/);
-  if (match) {
-    baseName = match[1].trim();
-    const pairs = match[2].split(',');
-    let matchedAny = false;
-    pairs.forEach((p) => {
-      const [t, c] = p.split(':').map((s) => s.trim());
-      if (t) {
-        const idx = TALLAS.findIndex((x) => x.toUpperCase() === t.toUpperCase());
-        if (idx !== -1 && c) {
-          tallasArray[idx] = c;
-          matchedAny = true;
-        } else if (idx !== -1 && !c) {
-          tallasArray[idx] = '1';
-          matchedAny = true;
-        }
-      }
-    });
-    if (!matchedAny) manualCant = String(totalCant || '1');
-    return { baseName, tallasArray, manualCant };
-  }
-
-  // Case 3: Plain description
-  return { baseName, tallasArray, manualCant: String(totalCant || '1') };
-}
-
 export default function EditGuiaView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -294,18 +225,18 @@ export default function EditGuiaView() {
   const [searching, setSearching] = useState(false);
   const [selProd, setSelProd] = useState(null);
   const [unidadesSunat, setUnidadesSunat] = useState([]);
-  const [tallas, setTallas] = useState(Array(13).fill(''));
+  const [cantidad, setCantidad] = useState('1');
   const [pesoBruto, setPesoBruto] = useState('');
   const [pesoNeto, setPesoNeto] = useState('');
   const [pedido, setPedido] = useState('');
   const [editDescripcion, setEditDescripcion] = useState('');
+  const [editUnidad, setEditUnidad] = useState('');
   const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [editItemData, setEditItemData] = useState({
     code: '',
     descripcion: '',
     unidad: '',
-    tallas: Array(13).fill(''),
-    manualCant: '',
+    cantidad: '',
     pedido: '',
     pesoNeto: '',
     pesoBruto: '',
@@ -395,7 +326,7 @@ export default function EditGuiaView() {
 
   const selectProd = (p) => {
     setSelProd(p);
-    setTallas(Array(13).fill(''));
+    setCantidad('1');
     setPesoBruto('');
     setPesoNeto(p.weight || '');
     setPedido('');
@@ -405,13 +336,12 @@ export default function EditGuiaView() {
 
   const addItem = () => {
     if (!selProd) return;
-    const cant = tallas.reduce((s, v) => s + (parseFloat(v) || 0), 0) || 1;
+    const cant = parseFloat(cantidad) || 1;
     const neto = (cant * (parseFloat(pesoNeto) || 0)).toFixed(2);
     const bruto = parseFloat(pesoBruto || 0).toFixed(2);
-    const tallaStr = TALLAS.map((t, i) => tallas[i] ? `${t}:${tallas[i]}` : null).filter(Boolean).join(', ');
     setItems(p => [...p, {
       id_producto: selProd.id,
-      descripcion_producto: editDescripcion + (tallaStr ? ` [${tallaStr}]` : ''),
+      descripcion_producto: editDescripcion,
       cantidad: cant,
       unidad: editUnidad,
       pedido,
@@ -427,21 +357,15 @@ export default function EditGuiaView() {
 
   const startEditItem = (item, index) => {
     setEditingItemIndex(index);
-    const { baseName, tallasArray, manualCant } = parseDescriptionAndTallas(
-      item.descripcion_producto,
-      item.cantidad
-    );
-    const totalT = tallasArray.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
     const itemCant = parseFloat(item.cantidad) || 1;
     const unitNeto = item.t_neto && itemCant > 0 ? (parseFloat(item.t_neto) / itemCant).toFixed(3) : '';
 
     setEditItemData({
       id_producto: item.id_producto,
       code: item.code || '',
-      descripcion: baseName,
+      descripcion: item.descripcion_producto || '',
       unidad: item.unidad || '',
-      tallas: tallasArray,
-      manualCant: totalT > 0 ? '' : (manualCant || String(item.cantidad || '1')),
+      cantidad: String(item.cantidad || '1'),
       pedido: item.pedido || '',
       pesoNeto: unitNeto,
       pesoBruto: item.t_bruto ? String(item.t_bruto) : '',
@@ -455,8 +379,7 @@ export default function EditGuiaView() {
       code: '',
       descripcion: '',
       unidad: '',
-      tallas: Array(13).fill(''),
-      manualCant: '',
+      cantidad: '',
       pedido: '',
       pesoNeto: '',
       pesoBruto: '',
@@ -466,18 +389,8 @@ export default function EditGuiaView() {
   const saveEditedItem = () => {
     if (editingItemIndex === null || !editItemData) return;
 
-    const tallasTotal = editItemData.tallas.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-    const hasTallas = tallasTotal > 0;
-    const finalCant = hasTallas ? tallasTotal : (parseFloat(editItemData.manualCant) || 1);
-
-    const tallaStr = TALLAS.map((t, i) =>
-      editItemData.tallas[i] && parseFloat(editItemData.tallas[i]) > 0
-        ? `${t}:${editItemData.tallas[i]}`
-        : null
-    ).filter(Boolean).join(', ');
-
-    const baseDesc = (editItemData.descripcion || '').trim();
-    const finalDescripcion = baseDesc + (tallaStr ? ` [${tallaStr}]` : '');
+    const finalCant = parseFloat(editItemData.cantidad) || 1;
+    const finalDescripcion = (editItemData.descripcion || '').trim();
 
     const unitNeto = parseFloat(editItemData.pesoNeto) || 0;
     const calculatedNeto = (finalCant * unitNeto).toFixed(2);
@@ -883,29 +796,18 @@ export default function EditGuiaView() {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-gray-600 uppercase">Cantidades por Talla</p>
-                    <p className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                      Total: {tallas.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0) || 0}
-                    </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Cantidad</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
+                      value={cantidad}
+                      onChange={e => setCantidad(e.target.value)}
+                    />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {TALLAS.map((t, i) => (
-                      <div key={t} className="flex flex-col items-center gap-1">
-                        <span className="text-[10px] font-bold text-gray-500">{t}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-14 p-1.5 border border-gray-300 rounded-lg text-xs text-center focus:border-blue-500 outline-none"
-                          value={tallas[i]}
-                          onChange={e => { const n = [...tallas]; n[i] = e.target.value; setTallas(n); }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">Pedido</label>
                     <input
@@ -1000,7 +902,7 @@ export default function EditGuiaView() {
                                 </span>
                               </div>
                               <p className="text-xs text-blue-600 font-medium mt-0.5">
-                                Modifique la descripción, unidad, tallas y cantidades
+                                Modifique la descripción, unidad y cantidad
                               </p>
                             </div>
                           </div>
@@ -1044,67 +946,20 @@ export default function EditGuiaView() {
                           </div>
                         </div>
 
-                        {/* Cantidades por Talla - Identical to Nueva Guía */}
-                        <div className="p-3.5 bg-white rounded-xl border border-blue-200 shadow-sm space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                              <p className="text-xs font-black text-gray-700 uppercase tracking-wider">
-                                Cantidades por Talla
-                              </p>
-                            </div>
-                            <span className="text-xs font-bold text-blue-800 bg-blue-100 border border-blue-200 px-3 py-1 rounded-full">
-                              Total Tallas: {editItemData.tallas.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0)}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {TALLAS.map((t, i) => (
-                              <div key={t} className="flex flex-col items-center gap-1 bg-gray-50 hover:bg-blue-50/50 p-1.5 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                                <span className="text-[11px] font-black text-gray-600 uppercase">{t}</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  placeholder="0"
-                                  className="w-14 p-1.5 border border-gray-300 rounded-md text-xs font-bold text-center bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                  value={editItemData.tallas[i]}
-                                  onChange={e => {
-                                    const val = e.target.value;
-                                    setEditItemData(prev => {
-                                      const n = [...prev.tallas];
-                                      n[i] = val;
-                                      return { ...prev, tallas: n };
-                                    });
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Fallback for items without tallas */}
-                          <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-3">
-                            <span className="text-xs text-gray-500 font-medium">
-                              O cantidad directa (si el producto no utiliza tallas):
-                            </span>
+                        {/* Cantidad, Pedido, KG Neto, KG Bruto */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-600 uppercase">Cantidad</label>
                             <input
                               type="number"
                               min="0"
+                              step="any"
+                              className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
                               placeholder="1"
-                              className="w-24 p-1.5 border border-gray-300 rounded-md text-xs font-bold text-center bg-white focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
-                              value={editItemData.manualCant}
-                              onChange={e => setEditItemData(prev => ({ ...prev, manualCant: e.target.value }))}
-                              disabled={editItemData.tallas.some(t => parseFloat(t) > 0)}
+                              value={editItemData.cantidad}
+                              onChange={e => setEditItemData(prev => ({ ...prev, cantidad: e.target.value }))}
                             />
-                            {editItemData.tallas.some(t => parseFloat(t) > 0) && (
-                              <span className="text-[11px] text-gray-400 italic">
-                                (Deshabilitado: se está sumando la cantidad de las tallas)
-                              </span>
-                            )}
                           </div>
-                        </div>
-
-                        {/* Pedido, KG Neto, KG Bruto */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-600 uppercase">Pedido</label>
                             <input
@@ -1125,7 +980,7 @@ export default function EditGuiaView() {
                               onChange={e => setEditItemData(prev => ({ ...prev, pesoNeto: e.target.value }))}
                             />
                             {(() => {
-                              const tSum = editItemData.tallas.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0) || (parseFloat(editItemData.manualCant) || 1);
+                              const tSum = parseFloat(editItemData.cantidad) || 1;
                               const uNet = parseFloat(editItemData.pesoNeto) || 0;
                               return uNet > 0 ? (
                                 <p className="text-[11px] text-blue-700 font-medium">

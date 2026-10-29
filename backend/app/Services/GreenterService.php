@@ -93,12 +93,12 @@ class GreenterService
 
         $invoice = (new Invoice())
             ->setUblVersion('2.1')
-            ->setFecVencimiento(new DateTime($venta->fecha_vencimiento ?? $venta->fecha_emision))
+            ->setFecVencimiento($this->fechaPeru($venta->fecha_vencimiento ?? $venta->fecha_emision))
             ->setTipoOperacion('0101')
             ->setTipoDoc($venta->tipo_documento) // '01' factura, '03' boleta
             ->setSerie($venta->serie)
             ->setCorrelativo($venta->correlativo)
-            ->setFechaEmision(new DateTime($venta->fecha_emision))
+            ->setFechaEmision($this->fechaPeru($venta->fecha_emision))
             ->setTipoMoneda($venta->moneda)
             ->setCompany($this->company)
             ->setClient($client)
@@ -133,7 +133,7 @@ class GreenterService
             foreach ($cuotasAjustadas as $cuota) {
                 $cuotasArr[] = (new Cuota())
                     ->setMonto($cuota['monto'])
-                    ->setFechaPago(new DateTime($cuota['fecha_pago']));
+                    ->setFechaPago($this->fechaPeru($cuota['fecha_pago']));
             }
             $invoice->setCuotas($cuotasArr);
         } else {
@@ -216,7 +216,7 @@ class GreenterService
             ->setTipoDoc('07') // Nota de crédito
             ->setSerie($serieNC)
             ->setCorrelativo($correlativoNC)
-            ->setFechaEmision(new DateTime())
+            ->setFechaEmision($this->fechaPeru('now'))
             ->setTipoMoneda($venta->moneda)
             ->setCompany($this->company)
             ->setClient($client)
@@ -292,6 +292,15 @@ class GreenterService
 
     private function getMontoEnLetras($monto)
     {
-        return "SON " . number_format($monto, 2) . " SOLES"; 
+        return "SON " . number_format($monto, 2) . " SOLES";
+    }
+
+    /**
+     * Greenter escribe las fechas del XML en hora de Perú. Si la fecha (sin hora) se crea en la
+     * zona del servidor (UTC), medianoche UTC pasa a ser las 19:00 del día ANTERIOR en Lima.
+     */
+    private function fechaPeru(?string $fecha): DateTime
+    {
+        return new DateTime($fecha ?? 'now', new \DateTimeZone('America/Lima'));
     }
 }
