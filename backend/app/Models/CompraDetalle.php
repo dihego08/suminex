@@ -13,6 +13,7 @@ class CompraDetalle extends Model
         'codigo_compra',
         'id_compra',
         'id_insumo',
+        'descripcion',
         'precio',
         'cantidad',
         'unidad',

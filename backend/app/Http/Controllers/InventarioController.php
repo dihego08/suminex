@@ -63,6 +63,9 @@ class InventarioController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
+        $notas = \App\Models\NotaAlmacen::whereIn('id', $operaciones->pluck('id_nota_almacen')->filter()->unique())
+            ->get()->keyBy('id');
+
         $kardexItems = [];
         $saldoAcumulado = 0;
 
@@ -72,6 +75,31 @@ class InventarioController extends Controller
             $entrada = 0;
             $salida = 0;
             $precio = $op->price_in > 0 ? $op->price_in : $op->price_out;
+
+            // Movimientos generados por Notas de Ingreso / Salida
+            if ($op->id_nota_almacen) {
+                $nota = $notas[$op->id_nota_almacen] ?? null;
+                $esIngreso = (int) $op->operation_type_id === 1;
+                if ($esIngreso) {
+                    $entrada = (float) $op->q;
+                    $saldoAcumulado += $entrada;
+                } else {
+                    $salida = (float) $op->q;
+                    $saldoAcumulado -= $salida;
+                }
+                $kardexItems[] = [
+                    'id' => $op->id,
+                    'fecha' => $op->created_at,
+                    'tipo_id' => $op->operation_type_id,
+                    'tipo' => ($esIngreso ? 'Nota de Ingreso' : 'Nota de Salida') . ($nota ? ' - ' . $nota->motivo : ''),
+                    'referencia' => $nota ? $nota->codigo : 'Nota #' . $op->id_nota_almacen,
+                    'precio_unitario' => (float) $precio,
+                    'entrada' => $entrada,
+                    'salida' => $salida,
+                    'saldo' => $saldoAcumulado,
+                ];
+                continue;
+            }
 
             switch ($op->operation_type_id) {
                 case 1: // Entrada (Compra o Ajuste positivo)

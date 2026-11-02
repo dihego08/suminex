@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Search, Plus, Filter, Eye, Trash2, ShoppingBag, Calendar, FileText, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SERVER_URL } from '../config';
+import { TIPOS_COMPRA, tipoCompraInfo } from '../utils/tiposCompra';
 
 const Compras = () => {
   const [compras, setCompras] = useState([]);
@@ -12,6 +13,7 @@ const Compras = () => {
   const [fechaHasta, setFechaHasta] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [tipoCompra, setTipoCompra] = useState('');
 
   // Modal Detalle
   const [selectedCompra, setSelectedCompra] = useState(null);
@@ -19,7 +21,7 @@ const Compras = () => {
 
   useEffect(() => {
     fetchCompras();
-  }, [searchTerm, fechaDesde, fechaHasta, currentPage]);
+  }, [searchTerm, fechaDesde, fechaHasta, currentPage, tipoCompra]);
 
   const fetchCompras = async () => {
     try {
@@ -27,6 +29,7 @@ const Compras = () => {
       const res = await axios.get(`${SERVER_URL}/api/compras`, {
         params: {
           search: searchTerm,
+          tipo_compra: tipoCompra,
           fecha_desde: fechaDesde,
           fecha_hasta: fechaHasta,
           page: currentPage,
@@ -48,12 +51,12 @@ const Compras = () => {
   };
 
   const handleEliminarCompra = async (id) => {
-    if (!window.confirm('¿Seguro que deseas anular esta compra? Esto revertirá el stock de los productos ingresados.')) {
+    if (!window.confirm('¿Seguro que deseas anular esta compra?')) {
       return;
     }
     try {
       await axios.delete(`${SERVER_URL}/api/compras/${id}`);
-      alert('Compra anulada y stock revertido.');
+      alert('Compra anulada.');
       fetchCompras();
     } catch (err) {
       console.error('Error al anular compra:', err);
@@ -81,6 +84,17 @@ const Compras = () => {
 
       {/* Filter Bar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-3">
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+          {[{ value: '', corto: 'Todas' }, ...TIPOS_COMPRA].map(t => (
+            <button
+              key={t.value}
+              onClick={() => { setTipoCompra(t.value); setCurrentPage(1); }}
+              className={`px-3 py-2 text-xs font-semibold transition-colors ${tipoCompra === t.value ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              {t.corto}
+            </button>
+          ))}
+        </div>
         <div className="flex-1 min-w-[240px] flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
           <Search className="text-gray-400" size={18} />
           <input
@@ -180,6 +194,9 @@ const Compras = () => {
                           <FileText size={15} className="text-gray-400" />
                           {comprobanteStr !== '-' ? comprobanteStr : `ID #${c.id}`}
                         </div>
+                        <span className={`inline-flex mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${tipoCompraInfo(c.tipo_compra).badge}`}>
+                          {tipoCompraInfo(c.tipo_compra).corto}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-800">{nombreProv}</div>
@@ -309,7 +326,7 @@ const Compras = () => {
                       selectedCompra.detalles.map((det) => (
                         <tr key={det.id} className="hover:bg-gray-50/50">
                           <td className="py-2 px-3 font-medium text-gray-800">
-                            {det.producto?.nombre || `Producto ID #${det.id_insumo}`}
+                            {det.producto?.nombre || det.descripcion || `Producto ID #${det.id_insumo}`}
                             {det.producto?.codigo && (
                               <span className="text-gray-400 block text-[11px] font-mono">
                                 SKU: {det.producto.codigo}

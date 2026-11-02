@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 class CompraController extends Controller
 {
+    public const TIPO_CATALOGO = 'CATALOGO';
+    public const TIPOS_COMPRA = ['CATALOGO', 'SUMINISTROS', 'AGASAJOS'];
+
     public function index(Request $request)
     {
         $query = Compra::with(['proveedorRel', 'detalles.producto']);
@@ -38,6 +41,10 @@ class CompraController extends Controller
             $query->whereDate('fecha_creacion', '<=', $request->fecha_hasta);
         }
 
+        if ($request->filled('tipo_compra')) {
+            $query->where('tipo_compra', strtoupper($request->tipo_compra));
+        }
+
         if ($request->has('id_proveedor') && !empty($request->id_proveedor)) {
             $query->where('id_proveedor', $request->id_proveedor);
         }
@@ -58,15 +65,24 @@ class CompraController extends Controller
 
     public function store(Request $request)
     {
+        $tipoCompra = strtoupper($request->tipo_compra ?? self::TIPO_CATALOGO);
+        $esCatalogo = $tipoCompra === self::TIPO_CATALOGO;
+
         $this->validate($request, [
+            'tipo_compra' => 'nullable|in:' . implode(',', self::TIPOS_COMPRA),
             'id_proveedor' => 'required',
             'serie' => 'required|string',
             'numeracion' => 'required|string',
             'fecha_creacion' => 'required|date',
             'detalles' => 'required|array|min:1',
-            'detalles.*.id_producto' => 'required|exists:productos,id',
+            // Catálogo: producto obligatorio. Suministros / Agasajos: descripción manual
+            'detalles.*.id_producto' => $esCatalogo ? 'required|exists:productos,id' : 'nullable',
+            'detalles.*.descripcion' => $esCatalogo ? 'nullable|string|max:255' : 'required|string|max:255',
             'detalles.*.cantidad' => 'required|numeric|min:0.01',
             'detalles.*.precio' => 'required|numeric|min:0',
+        ], [
+            'detalles.*.descripcion.required' => 'Ingrese la descripción de cada ítem.',
+            'detalles.*.id_producto.required' => 'Seleccione un producto del catálogo en cada ítem.',
         ]);
 
         DB::beginTransaction();
@@ -78,6 +94,7 @@ class CompraController extends Controller
 
             $compra = Compra::create([
                 'codigo' => $codigo,
+                'tipo_compra' => $tipoCompra,
                 'serie' => strtoupper(trim($request->serie)),
                 'numeracion' => trim($request->numeracion),
                 'id_proveedor' => $request->id_proveedor,
@@ -97,52 +114,39 @@ class CompraController extends Controller
                 'fproceso' => date('Y-m-d H:i:s'),
             ]);
 
-            $stockId = $request->stock_id ?? 1; // 1: Almacén Principal
 
             foreach ($request->detalles as $det) {
                 $cantidad = floatval($det['cantidad']);
                 $precio = floatval($det['precio']);
                 $subtotalItem = $cantidad * $precio;
 
+                $producto = $esCatalogo ? Producto::find($det['id_producto']) : null;
+
                 CompraDetalle::create([
                     'codigo_compra' => $codigo,
                     'id_compra' => $compra->id,
-                    'id_insumo' => $det['id_producto'],
+                    'id_insumo' => $producto ? $producto->id : null,
+                    'descripcion' => $producto ? $producto->nombre : trim($det['descripcion']),
                     'precio' => $precio,
                     'cantidad' => $cantidad,
                     'unidad' => $det['unidad'] ?? 'NIU',
                     'total' => $subtotalItem,
                 ]);
 
-                // 1. Aumentar el stock del producto y actualizar su precio de compra
-                $producto = Producto::find($det['id_producto']);
+                // Catálogo: solo se actualiza el precio de compra del producto.
+                // Las compras no mueven el kardex ni el stock (eso lo hacen las Notas de Ingreso / Salida).
                 if ($producto) {
-                    $producto->stock = floatval($producto->stock) + $cantidad;
                     $producto->precio_compra = $precio;
                     $producto->fecha_actualizacion = date('Y-m-d H:i:s');
                     $producto->save();
                 }
-
-                // 2. Registrar movimiento de entrada en el Kardex (tabla operation)
-                Operation::create([
-                    'product_id' => $det['id_producto'],
-                    'stock_id' => $stockId,
-                    'q' => $cantidad,
-                    'price_in' => $precio,
-                    'price_out' => 0,
-                    'operation_type_id' => 1, // 1: Entrada
-                    'status' => 1,
-                    'is_draft' => 0,
-                    'is_traspase' => 0,
-                    'created_at' => $request->fecha_creacion . ' ' . date('H:i:s'),
-                ]);
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Compra registrada exitosamente y stock actualizado.',
+                'message' => 'Compra registrada exitosamente.',
                 'compra' => $compra->load(['proveedorRel', 'detalles.producto'])
             ], 201);
 
@@ -161,29 +165,7 @@ class CompraController extends Controller
 
         DB::beginTransaction();
         try {
-            // Revertir el stock agregado por esta compra
-            foreach ($compra->detalles as $det) {
-                $producto = Producto::find($det->id_insumo);
-                if ($producto) {
-                    $producto->stock = max(0, floatval($producto->stock) - floatval($det->cantidad));
-                    $producto->save();
-                }
-
-                // Registrar salida de anulación en Kardex
-                Operation::create([
-                    'product_id' => $det->id_insumo,
-                    'stock_id' => 1,
-                    'q' => $det->cantidad,
-                    'price_in' => 0,
-                    'price_out' => $det->precio,
-                    'operation_type_id' => 2, // 2: Salida por reversión/anulación
-                    'status' => 1,
-                    'is_draft' => 0,
-                    'is_traspase' => 0,
-                    'created_at' => date('Y-m-d H:i:s'),
-                ]);
-            }
-
+            // Las compras no mueven el kardex ni el stock, así que al eliminarla no hay nada que revertir
             $compra->detalles()->delete();
             $compra->delete();
 
@@ -191,7 +173,7 @@ class CompraController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Compra eliminada y stock revertido correctamente.'
+                'message' => 'Compra eliminada correctamente.'
             ]);
 
         } catch (\Exception $e) {

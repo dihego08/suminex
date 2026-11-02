@@ -18,6 +18,10 @@ import PreciosCliente from './pages/PreciosCliente';
 import Compras from './pages/Compras';
 import NuevaCompra from './pages/NuevaCompra';
 import Inventario from './pages/Inventario';
+import NotasAlmacen from './pages/NotasAlmacen';
+import OrdenesCompra from './pages/OrdenesCompra';
+import FormOrdenCompra from './pages/FormOrdenCompra';
+import NuevaNotaAlmacen from './pages/NuevaNotaAlmacen';
 import Proveedores from './pages/Proveedores';
 import Marcas from './pages/Marcas';
 import Guias from './pages/Guias';
@@ -70,6 +74,11 @@ function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/compras/nueva" element={<NuevaCompra />} />
           <Route path="/inventario" element={<Inventario />} />
+          <Route path="/ordenes-compra" element={<OrdenesCompra />} />
+          <Route path="/ordenes-compra/nueva" element={<FormOrdenCompra />} />
+          <Route path="/ordenes-compra/editar/:id" element={<FormOrdenCompra />} />
+          <Route path="/notas-almacen" element={<NotasAlmacen />} />
+          <Route path="/notas-almacen/nueva/:tipo" element={<NuevaNotaAlmacen />} />
           <Route path="/permissions" element={<Permissions />} />
           <Route path="/precios-cliente" element={<PreciosCliente />} />
           <Route path="/guias" element={<Guias />} />

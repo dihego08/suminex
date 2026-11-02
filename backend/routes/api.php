@@ -132,4 +132,21 @@ Route::get('/', function () {
     Route::delete('guias/{id}', [GuiaController::class, 'destroy']);
     Route::get('guias/{id}/pdf', [GuiaPdfController::class, 'downloadGuiaPdf']);
     Route::post('guias/{id}/send-sunat', [GuiaController::class, 'sendToSunat']);
+
+    // Órdenes de compra
+    Route::get('ordenes-compra/siguiente', [\App\Http\Controllers\OrdenCompraController::class, 'siguiente']);
+    Route::get('ordenes-compra', [\App\Http\Controllers\OrdenCompraController::class, 'index']);
+    Route::post('ordenes-compra', [\App\Http\Controllers\OrdenCompraController::class, 'store']);
+    Route::get('ordenes-compra/{id}', [\App\Http\Controllers\OrdenCompraController::class, 'show']);
+    Route::put('ordenes-compra/{id}', [\App\Http\Controllers\OrdenCompraController::class, 'update']);
+    Route::post('ordenes-compra/{id}/anular', [\App\Http\Controllers\OrdenCompraController::class, 'anular']);
+    Route::get('ordenes-compra/{id}/pdf', [\App\Http\Controllers\OrdenCompraController::class, 'pdf']);
+
+    // Notas de Ingreso / Salida de almacén (mueven el kardex)
+    Route::get('notas-almacen/form-data', [\App\Http\Controllers\NotaAlmacenController::class, 'formData']);
+    Route::get('notas-almacen', [\App\Http\Controllers\NotaAlmacenController::class, 'index']);
+    Route::post('notas-almacen', [\App\Http\Controllers\NotaAlmacenController::class, 'store']);
+    Route::get('notas-almacen/{id}', [\App\Http\Controllers\NotaAlmacenController::class, 'show']);
+    Route::post('notas-almacen/{id}/anular', [\App\Http\Controllers\NotaAlmacenController::class, 'anular']);
+    Route::get('notas-almacen/{id}/pdf', [\App\Http\Controllers\NotaAlmacenController::class, 'pdf']);
     Route::get('guias/{id}/sunat-status', [GuiaController::class, 'checkSunatStatus']);

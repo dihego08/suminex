@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ShoppingCart, Plus, Trash2, ArrowLeft, Save, Search, AlertCircle, Building2, Package } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { SERVER_URL } from '../config';
+import { TIPOS_COMPRA } from '../utils/tiposCompra';
 
 const NuevaCompra = () => {
   const navigate = useNavigate();
@@ -14,6 +15,10 @@ const NuevaCompra = () => {
   const [loadingInitial, setLoadingInitial] = useState(true);
 
   // Form Header State
+  const [tipoCompra, setTipoCompra] = useState('CATALOGO');
+  const esCatalogo = tipoCompra === 'CATALOGO';
+  const [itemDescripcion, setItemDescripcion] = useState('');
+  const [itemUnidad, setItemUnidad] = useState('UND');
   const [idProveedor, setIdProveedor] = useState('');
   const [tipoDocumento, setTipoDocumento] = useState('1'); // 1: Factura, 2: Boleta, etc.
   const [serie, setSerie] = useState('');
@@ -62,10 +67,27 @@ const NuevaCompra = () => {
     }
   };
 
+  const cambiarTipo = (nuevo) => {
+    if (nuevo === tipoCompra) return;
+    if (items.length > 0 && !window.confirm('Al cambiar el tipo de compra se quitarán los ítems agregados. ¿Continuar?')) return;
+    setTipoCompra(nuevo);
+    setItems([]);
+    setSelectedProductoId('');
+    setSearchTerm('');
+    setItemDescripcion('');
+    setItemUnidad('UND');
+    setItemCantidad(1);
+    setItemPrecio(0);
+  };
+
   const handleAddItem = (e) => {
     e.preventDefault();
-    if (!selectedProductoId) {
+    if (esCatalogo && !selectedProductoId) {
       alert('Por favor selecciona un producto');
+      return;
+    }
+    if (!esCatalogo && !itemDescripcion.trim()) {
+      alert('Ingresa la descripción del ítem');
       return;
     }
     const cant = parseFloat(itemCantidad);
@@ -77,6 +99,24 @@ const NuevaCompra = () => {
     }
     if (isNaN(prec) || prec < 0) {
       alert('El precio no puede ser negativo');
+      return;
+    }
+
+    // Suministros / Agasajos: ítem con descripción manual (sin producto del catálogo)
+    if (!esCatalogo) {
+      setItems([...items, {
+        id_producto: null,
+        codigo: '',
+        nombre: itemDescripcion.trim().toUpperCase(),
+        unidad: itemUnidad.trim().toUpperCase() || 'UND',
+        cantidad: cant,
+        precio: prec,
+        total: cant * prec
+      }]);
+      setItemDescripcion('');
+      setItemUnidad('UND');
+      setItemCantidad(1);
+      setItemPrecio(0);
       return;
     }
 
@@ -141,6 +181,7 @@ const NuevaCompra = () => {
     try {
       setSubmitting(true);
       const payload = {
+        tipo_compra: tipoCompra,
         id_proveedor: idProveedor,
         tipo_documento: tipoDocumento,
         serie: serie.trim(),
@@ -151,6 +192,7 @@ const NuevaCompra = () => {
         total: Number(totalPagar.toFixed(2)),
         detalles: items.map(it => ({
           id_producto: it.id_producto,
+          descripcion: it.nombre,
           cantidad: it.cantidad,
           precio: it.precio,
           unidad: it.unidad
@@ -158,7 +200,7 @@ const NuevaCompra = () => {
       };
 
       await axios.post(`${SERVER_URL}/api/compras`, payload);
-      alert('¡Compra registrada exitosamente! El stock de los productos ha sido actualizado e ingresado al Kardex.');
+      alert('¡Compra registrada exitosamente!');
       navigate('/compras');
 
     } catch (err) {
@@ -194,6 +236,26 @@ const NuevaCompra = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Tipo de compra */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center gap-3">
+          <span className="text-xs font-semibold text-gray-700 uppercase">Tipo de compra *</span>
+          <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+            {TIPOS_COMPRA.map(t => (
+              <button
+                type="button"
+                key={t.value}
+                onClick={() => cambiarTipo(t.value)}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${tipoCompra === t.value ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-gray-500">
+            {esCatalogo ? 'Se buscan productos del catálogo y se actualiza su precio de compra.' : 'Los ítems se ingresan con descripción manual.'}
+          </span>
+        </div>
+
         {/* Card 1: Datos del Comprobante y Proveedor */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
           <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
@@ -295,10 +357,38 @@ const NuevaCompra = () => {
         {/* Card 2: Agregar Productos */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
           <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
-            <Package size={16} className="text-brand-600" /> Agregar Productos al Inventario
+            <Package size={16} className="text-brand-600" /> {esCatalogo ? 'Agregar Productos del Catálogo' : 'Agregar Ítems'}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            {!esCatalogo && (
+              <>
+                <div className="md:col-span-4">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                    Descripción *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={tipoCompra === 'AGASAJOS' ? 'Ej. Gaseosa 3L' : 'Ej. Papel bond A4'}
+                    value={itemDescripcion}
+                    onChange={(e) => setItemDescripcion(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none text-sm"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                    Unidad
+                  </label>
+                  <input
+                    type="text"
+                    value={itemUnidad}
+                    onChange={(e) => setItemUnidad(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-brand-500 focus:bg-white outline-none text-sm"
+                  />
+                </div>
+              </>
+            )}
+            {esCatalogo && (
             <div className="md:col-span-6 relative">
               <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
                 Buscar Producto *
@@ -337,6 +427,7 @@ const NuevaCompra = () => {
                 )}
               </div>
             </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
@@ -434,8 +525,8 @@ const NuevaCompra = () => {
         {/* Card 3: Resumen y Guardar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="text-xs text-gray-500 space-y-1">
-            <p>• Los productos ingresados incrementarán automáticamente el inventario actual.</p>
-            <p>• Se registrará la entrada formal con costo en el Kardex.</p>
+            {esCatalogo && <p>• Se actualizará el precio de compra de los productos.</p>}
+            <p>• La compra no modifica el stock ni el Kardex (use Notas de Ingreso / Salida).</p>
           </div>
 
           <div className="flex flex-col md:flex-row items-end md:items-center gap-6 w-full md:w-auto">
@@ -459,7 +550,7 @@ const NuevaCompra = () => {
               className="w-full md:w-auto flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-brand-500/20 transition-all disabled:opacity-50"
             >
               <Save size={18} />
-              {submitting ? 'Procesando...' : 'Guardar Compra e Ingresar Stock'}
+              {submitting ? 'Procesando...' : 'Guardar Compra'}
             </button>
           </div>
         </div>

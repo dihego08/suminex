@@ -19,6 +19,7 @@ class Operation extends Model
         'price_out',
         'operation_type_id',
         'sell_id',
+        'id_nota_almacen',
         'status',
         'is_draft',
         'is_traspase',

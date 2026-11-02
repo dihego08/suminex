@@ -11,6 +11,7 @@ class Compra extends Model
 
     protected $fillable = [
         'codigo',
+        'tipo_compra',
         'serie',
         'numeracion',
         'id_proveedor',
