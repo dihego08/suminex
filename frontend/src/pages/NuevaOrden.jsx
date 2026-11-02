@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Plus, Trash2, ArrowLeft, Receipt, Calendar, User, FileText, Image as ImageIcon, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { API_URL } from '../config';
+import { API_URL, SERVER_URL } from '../config';
 
 const NuevaOrden = () => {
   const navigate = useNavigate();
@@ -320,7 +320,7 @@ const NuevaOrden = () => {
                         <td className="p-3 text-center">
                           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 mx-auto">
                             {det.imagen ? (
-                              <img src={det.imagen} alt="Producto" className="w-full h-full object-cover" />
+                              <img src={`${SERVER_URL}/images/products/${det.imagen}`} alt="Producto" className="w-full h-full object-cover" />
                             ) : (
                               <ImageIcon size={20} className="text-gray-400" />
                             )}
@@ -354,7 +354,7 @@ const NuevaOrden = () => {
                                     className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors flex gap-3 items-center"
                                   >
                                     {p.imagen ? (
-                                      <img src={p.imagen} alt={p.nombre} className="w-10 h-10 rounded-md object-cover bg-gray-100" />
+                                      <img src={`${SERVER_URL}/images/products/${p.imagen}`} alt={p.nombre} className="w-10 h-10 rounded-md object-cover bg-gray-100" />
                                     ) : (
                                       <div className="w-10 h-10 rounded-md bg-gray-100 flex justify-center items-center"><ImageIcon size={16} className="text-gray-400"/></div>
                                     )}

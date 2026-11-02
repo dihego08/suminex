@@ -8,6 +8,7 @@ import NuevaCotizacion from './pages/NuevaCotizacion';
 import CotizacionPrint from './pages/CotizacionPrint';
 import OrdenesPedido from './pages/OrdenesPedido';
 import NuevaOrden from './pages/NuevaOrden';
+import OrdenPrint from './pages/OrdenPrint';
 import Ventas from './pages/Ventas';
 import NuevaVenta from './pages/NuevaVenta';
 import VentaPrint from './pages/VentaPrint';
@@ -61,6 +62,7 @@ function App() {
           <Route path="/ordenes" element={<OrdenesPedido />} />
           <Route path="/ordenes/nueva" element={<NuevaOrden />} />
           <Route path="/ordenes/editar/:id" element={<NuevaOrden />} />
+          <Route path="/ordenes/:id/imprimir" element={<OrdenPrint />} />
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/ventas/nueva" element={<NuevaVenta />} />
           <Route path="/ventas/editar/:id" element={<NuevaVenta />} />
