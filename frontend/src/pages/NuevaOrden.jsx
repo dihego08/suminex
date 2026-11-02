@@ -59,10 +59,10 @@ const NuevaOrden = () => {
           setDetalles(cot.detalles.map(d => ({
             id_producto: d.id_producto,
             nota: d.descripcion_personalizada || '',
-            cantidad: d.cantidad,
+            cantidad: parseFloat(d.cantidad) || 0,
             unidad_medida: d.producto?.unidad_medida || 'UND',
-            precio_unitario: d.precio_unitario,
-            total: d.total,
+            precio_unitario: parseFloat(d.precio_unitario) || 0,
+            total: parseFloat(d.total) || 0,
             imagen: d.producto?.imagen || null,
             nombre: d.producto?.nombre || '',
             busqueda: d.producto ? `${d.producto.codigo} - ${d.producto.nombre}` : ''
@@ -143,7 +143,7 @@ const NuevaOrden = () => {
     c.ruc.includes(searchTerm)
   );
 
-  const subtotal = detalles.reduce((acc, curr) => acc + curr.total, 0);
+  const subtotal = detalles.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
   const igv = formData.aplica_igv ? subtotal * 0.18 : 0;
   const total = subtotal + igv;
 
@@ -455,7 +455,7 @@ const NuevaOrden = () => {
                           />
                         </td>
                         <td className="p-3 font-medium text-gray-700">
-                          S/ {det.total.toFixed(2)}
+                          S/ {(Number(det.total) || 0).toFixed(2)}
                         </td>
                         <td className="p-3 text-center">
                           {detalles.length > 1 ? (
