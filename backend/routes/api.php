@@ -150,3 +150,60 @@ Route::get('/', function () {
     Route::post('notas-almacen/{id}/anular', [\App\Http\Controllers\NotaAlmacenController::class, 'anular']);
     Route::get('notas-almacen/{id}/pdf', [\App\Http\Controllers\NotaAlmacenController::class, 'pdf']);
     Route::get('guias/{id}/sunat-status', [GuiaController::class, 'checkSunatStatus']);
+
+    // =====================================================================
+    // SIG: Perfil de Puesto, Áreas, Puestos, Personal (colaboradores) y Documentos
+    // =====================================================================
+    Route::get('sig/puestos', [\App\Http\Controllers\PerfilPuestoController::class, 'getPuestos']);
+    Route::get('sig/perfil/{id}', [\App\Http\Controllers\PerfilPuestoController::class, 'show']);
+    Route::post('sig/perfil', [\App\Http\Controllers\PerfilPuestoController::class, 'store']);
+
+    // Áreas, Puestos y Colaboradores no tienen update: el store crea o actualiza según el id enviado
+    Route::apiResource('sig/areas', \App\Http\Controllers\AreaController::class)->except(['update']);
+    Route::apiResource('sig/puestos-crud', \App\Http\Controllers\PuestoController::class)->except(['update']);
+    Route::apiResource('tipos_contratos', \App\Http\Controllers\TipoContratoController::class);
+
+    Route::get('sig/colaboradores/metadata', [\App\Http\Controllers\ColaboradorController::class, 'getMetadata']);
+    Route::apiResource('sig/colaboradores', \App\Http\Controllers\ColaboradorController::class)->except(['update']);
+
+    // Sub-recursos del colaborador. Los que suben archivos actualizan por POST (multipart).
+    $subrecursos = [
+        'familiares' => [\App\Http\Controllers\ColaboradorFamiliarController::class, 'put'],
+        'formacion' => [\App\Http\Controllers\ColaboradorFormacionController::class, 'post'],
+        'experiencia' => [\App\Http\Controllers\ColaboradorExperienciaLaboralController::class, 'post'],
+        'habilidades' => [\App\Http\Controllers\ColaboradorHabilidadController::class, 'put'],
+        'capacitaciones' => [\App\Http\Controllers\ColaboradorCapacitacionController::class, 'post'],
+        'vacaciones' => [\App\Http\Controllers\ColaboradorVacacionController::class, 'post'],
+        'contratos' => [\App\Http\Controllers\ColaboradorContratoController::class, 'post'],
+        'examenes_medicos' => [\App\Http\Controllers\ColaboradorExamenMedicoController::class, 'post'],
+        'recomendaciones_sst' => [\App\Http\Controllers\ColaboradorRecomendacionSstController::class, 'post'],
+        'verificacion_competencias' => [\App\Http\Controllers\ColaboradorVerificacionCompetenciaController::class, 'post'],
+    ];
+    foreach ($subrecursos as $ruta => [$controller, $metodoUpdate]) {
+        Route::get("sig/colaboradores/{colaborador}/{$ruta}", [$controller, 'index']);
+        Route::post("sig/colaboradores/{colaborador}/{$ruta}", [$controller, 'store']);
+        Route::$metodoUpdate("sig/colaboradores/{colaborador}/{$ruta}/{id}", [$controller, 'update']);
+        Route::delete("sig/colaboradores/{colaborador}/{$ruta}/{id}", [$controller, 'destroy']);
+    }
+
+    // Biblioteca de documentos
+    Route::get('library', [\App\Http\Controllers\DocumentController::class, 'index']);
+    Route::get('library/search', [\App\Http\Controllers\DocumentController::class, 'search']);
+    Route::post('library/folders', [\App\Http\Controllers\DocumentController::class, 'createFolder']);
+    Route::post('library/files', [\App\Http\Controllers\DocumentController::class, 'uploadFile']);
+    Route::delete('library/folders/{id}', [\App\Http\Controllers\DocumentController::class, 'deleteFolder']);
+    Route::delete('library/files/{id}', [\App\Http\Controllers\DocumentController::class, 'deleteFile']);
+
+    // Indica si un archivo ya está en la API o solo en el sistema anterior.
+    // Mismas carpetas que usan los controladores (convención del sistema: public/images y public/uploads).
+    Route::get('documento-existe/{carpeta}/{archivo}', function ($carpeta, $archivo) {
+        $carpeta = basename($carpeta);
+        $archivo = basename($archivo);
+        $carpetas = [
+            'img-colaboradores' => 'images/colaboradores',
+            'doc-colaboradores' => 'uploads/colaboradores/dni',
+            'biblioteca' => 'uploads/biblioteca',
+        ];
+        $ruta = public_path(($carpetas[$carpeta] ?? "uploads/colaboradores/{$carpeta}") . "/{$archivo}");
+        return response()->json(['exists' => file_exists($ruta)]);
+    });

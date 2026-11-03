@@ -20,6 +20,11 @@ import NuevaCompra from './pages/NuevaCompra';
 import Inventario from './pages/Inventario';
 import NotasAlmacen from './pages/NotasAlmacen';
 import OrdenesCompra from './pages/OrdenesCompra';
+import PerfilPuestosView from './pages/PerfilPuestosView';
+import AreasView from './pages/AreasView';
+import PuestosView from './pages/PuestosView';
+import ColaboradoresView from './pages/ColaboradoresView';
+import DocumentsView from './pages/DocumentsView';
 import FormOrdenCompra from './pages/FormOrdenCompra';
 import NuevaNotaAlmacen from './pages/NuevaNotaAlmacen';
 import Proveedores from './pages/Proveedores';
@@ -74,6 +79,12 @@ function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/compras/nueva" element={<NuevaCompra />} />
           <Route path="/inventario" element={<Inventario />} />
+          {/* SIG */}
+          <Route path="/sig/perfil-puesto" element={<PerfilPuestosView />} />
+          <Route path="/sig/areas" element={<AreasView />} />
+          <Route path="/sig/puestos" element={<PuestosView />} />
+          <Route path="/sig/colaboradores" element={<ColaboradoresView />} />
+          <Route path="/sig/documents" element={<DocumentsView />} />
           <Route path="/ordenes-compra" element={<OrdenesCompra />} />
           <Route path="/ordenes-compra/nueva" element={<FormOrdenCompra />} />
           <Route path="/ordenes-compra/editar/:id" element={<FormOrdenCompra />} />
