@@ -55,7 +55,8 @@ class GuiaController extends Controller
 
         $detalle = DB::table('guia_detalle as vd')
             ->leftJoin('productos as p', 'p.id', '=', 'vd.id_producto')
-            ->select('vd.*', 'vd.descripcion_producto as descripcion_producto', 'p.codigo as code', 'p.nombre as producto_nombre')
+            // 'name' es el respaldo que usan Ver detalle y Editar cuando la descripción está vacía
+            ->select('vd.*', 'vd.descripcion_producto as descripcion_producto', 'p.codigo as code', 'p.nombre as producto_nombre', 'p.nombre as name')
             ->where('vd.id_guia', $id)
             ->get();
 

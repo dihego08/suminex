@@ -6,6 +6,7 @@ use App\Models\OrdenPedido;
 use App\Models\Cotizacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 use App\Models\OrdenPedidoDetalle;
 
@@ -53,7 +54,7 @@ class OrdenPedidoController extends Controller
                 $cotizacion->estado = 'Aprobada';
                 $cotizacion->save();
 
-                $orden = OrdenPedido::create([
+                $ordenData = [
                     'id_cotizacion' => $cotizacion->id,
                     'numero' => $numeroGenerado,
                     'id_cliente' => $cotizacion->id_cliente,
@@ -64,7 +65,11 @@ class OrdenPedidoController extends Controller
                     'aplica_igv' => $cotizacion->aplica_igv ?? 1,
                     'total' => $cotizacion->total,
                     'terminos_condiciones' => $cotizacion->terminos_condiciones
-                ]);
+                ];
+                if (Schema::hasColumn('ordenes_pedido', 'incluye_igv')) {
+                    $ordenData['incluye_igv'] = $cotizacion->incluye_igv ?? 0;
+                }
+                $orden = OrdenPedido::create($ordenData);
 
                 foreach ($cotizacion->detalles as $det) {
                     OrdenPedidoDetalle::create([
@@ -88,7 +93,7 @@ class OrdenPedidoController extends Controller
                     'detalles' => 'required|array',
                 ]);
 
-                $orden = OrdenPedido::create([
+                $ordenData = [
                     'numero' => $numeroGenerado,
                     'id_cliente' => $request->id_cliente,
                     'fecha' => $request->fecha,
@@ -98,7 +103,11 @@ class OrdenPedidoController extends Controller
                     'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                     'total' => $request->total,
                     'terminos_condiciones' => $request->terminos_condiciones
-                ]);
+                ];
+                if (Schema::hasColumn('ordenes_pedido', 'incluye_igv')) {
+                    $ordenData['incluye_igv'] = $request->has('incluye_igv') ? (int) $request->boolean('incluye_igv') : 0;
+                }
+                $orden = OrdenPedido::create($ordenData);
 
                 foreach ($request->detalles as $det) {
                     OrdenPedidoDetalle::create([
@@ -137,7 +146,7 @@ class OrdenPedidoController extends Controller
         DB::beginTransaction();
 
         try {
-            $orden->update([
+            $ordenData = [
                 'id_cliente' => $request->id_cliente,
                 'fecha' => $request->fecha,
                 'base_imponible' => $request->base_imponible,
@@ -145,7 +154,11 @@ class OrdenPedidoController extends Controller
                 'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                 'total' => $request->total,
                 'terminos_condiciones' => $request->terminos_condiciones
-            ]);
+            ];
+            if (Schema::hasColumn('ordenes_pedido', 'incluye_igv')) {
+                $ordenData['incluye_igv'] = $request->has('incluye_igv') ? (int) $request->boolean('incluye_igv') : 0;
+            }
+            $orden->update($ordenData);
 
             // Borrar detalles antiguos y crear los nuevos (solo si es nativa o queremos forzar nativos)
             OrdenPedidoDetalle::where('id_orden_pedido', $orden->id)->delete();

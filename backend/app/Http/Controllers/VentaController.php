@@ -644,11 +644,8 @@ class VentaController extends Controller
      */
     private function descripcionItemPdf($item): string
     {
-        $desc = e($item->producto->nombre ?? '');
-        if ($item->descripcion_personalizada) {
-            $desc .= ' - ' . e($item->descripcion_personalizada);
-        }
-        return $desc;
+        // Misma descripción que se envía a SUNAT (ver VentaDetalle::descripcion_completa)
+        return e($item->descripcion_completa);
     }
 
     public function anularVenta(Request $request, $id)

@@ -6,6 +6,7 @@ use App\Models\Cotizacion;
 use App\Models\CotizacionDetalle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CotizacionController extends Controller
 {
@@ -41,7 +42,7 @@ class CotizacionController extends Controller
             $num = $ultimo ? (int)str_replace('COT-', '', $ultimo->numero) + 1 : 100;
             $numeroGenerado = 'COT-' . $num;
 
-            $cotizacion = Cotizacion::create([
+            $cotData = [
                 'numero' => $numeroGenerado,
                 'id_cliente' => $request->id_cliente,
                 'fecha' => $request->fecha,
@@ -52,7 +53,13 @@ class CotizacionController extends Controller
                 'total' => $request->total,
                 'estado' => 'Pendiente',
                 'terminos_condiciones' => $request->terminos_condiciones
-            ]);
+            ];
+
+            if (Schema::hasColumn('cotizaciones', 'incluye_igv')) {
+                $cotData['incluye_igv'] = $request->has('incluye_igv') ? (int) $request->boolean('incluye_igv') : 0;
+            }
+
+            $cotizacion = Cotizacion::create($cotData);
 
             foreach ($request->detalles as $det) {
                 CotizacionDetalle::create([
@@ -91,7 +98,7 @@ class CotizacionController extends Controller
         DB::beginTransaction();
 
         try {
-            $cotizacion->update([
+            $cotData = [
                 'id_cliente' => $request->id_cliente,
                 'fecha' => $request->fecha,
                 'fecha_vencimiento' => $request->fecha_vencimiento,
@@ -100,7 +107,13 @@ class CotizacionController extends Controller
                 'aplica_igv' => $request->has('aplica_igv') ? (int) $request->boolean('aplica_igv') : 1,
                 'total' => $request->total,
                 'terminos_condiciones' => $request->terminos_condiciones
-            ]);
+            ];
+
+            if (Schema::hasColumn('cotizaciones', 'incluye_igv')) {
+                $cotData['incluye_igv'] = $request->has('incluye_igv') ? (int) $request->boolean('incluye_igv') : 0;
+            }
+
+            $cotizacion->update($cotData);
 
             // Borrar detalles antiguos y crear los nuevos
             CotizacionDetalle::where('id_cotizacion', $cotizacion->id)->delete();

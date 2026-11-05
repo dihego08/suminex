@@ -20,6 +20,7 @@ const NuevaOrden = () => {
     fecha: fechaLocal(),
     fecha_vencimiento: fechaLocal(7), // 7 days later
     aplica_igv: true,
+    incluye_igv: false,
     terminos_condiciones: 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'
   });
 
@@ -48,6 +49,7 @@ const NuevaOrden = () => {
           fecha: cot.fecha,
           fecha_vencimiento: cot.fecha_vencimiento,
           aplica_igv: cot.aplica_igv === undefined || cot.aplica_igv === null ? true : cot.aplica_igv == 1,
+          incluye_igv: cot.incluye_igv == 1,
           terminos_condiciones: cot.terminos_condiciones || ''
         });
         
@@ -143,9 +145,27 @@ const NuevaOrden = () => {
     c.ruc.includes(searchTerm)
   );
 
-  const subtotal = detalles.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
-  const igv = formData.aplica_igv ? subtotal * 0.18 : 0;
-  const total = subtotal + igv;
+  const rawTotal = detalles.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
+
+  let subtotal = 0;
+  let igv = 0;
+  let total = 0;
+
+  if (formData.aplica_igv) {
+    if (formData.incluye_igv) {
+      total = rawTotal;
+      subtotal = rawTotal / 1.18;
+      igv = total - subtotal;
+    } else {
+      subtotal = rawTotal;
+      igv = subtotal * 0.18;
+      total = subtotal + igv;
+    }
+  } else {
+    subtotal = rawTotal;
+    igv = 0;
+    total = rawTotal;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -169,6 +189,7 @@ const NuevaOrden = () => {
       const payload = {
         ...formData,
         aplica_igv: formData.aplica_igv ? 1 : 0,
+        incluye_igv: formData.incluye_igv ? 1 : 0,
         base_imponible: subtotal.toFixed(2),
         igv: igv.toFixed(2),
         total: total.toFixed(2),
@@ -503,16 +524,29 @@ const NuevaOrden = () => {
 
           <div className="w-full md:w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <h3 className="font-semibold text-gray-800 mb-4 pb-2 border-b">Resumen</h3>
-            <label htmlFor="aplica_igv" className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                id="aplica_igv"
-                checked={formData.aplica_igv}
-                onChange={(e) => setFormData({ ...formData, aplica_igv: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Aplica IGV (18%)</span>
-            </label>
+            <div className="space-y-2 mb-4">
+              <label htmlFor="incluye_igv" className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none hover:bg-gray-100/70 transition-colors">
+                <input
+                  type="checkbox"
+                  id="incluye_igv"
+                  checked={formData.incluye_igv}
+                  onChange={(e) => setFormData({ ...formData, incluye_igv: e.target.checked })}
+                  className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Precios incluyen IGV</span>
+              </label>
+
+              <label htmlFor="aplica_igv" className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer select-none hover:bg-gray-100/70 transition-colors">
+                <input
+                  type="checkbox"
+                  id="aplica_igv"
+                  checked={formData.aplica_igv}
+                  onChange={(e) => setFormData({ ...formData, aplica_igv: e.target.checked })}
+                  className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Aplica IGV (18%)</span>
+              </label>
+            </div>
             <div className="flex justify-between mb-3 text-sm text-gray-600">
               <span>Base Imponible:</span>
               <span className="font-medium">S/ {subtotal.toFixed(2)}</span>

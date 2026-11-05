@@ -225,7 +225,9 @@ export default function NewGuiaView() {
         const newItems = v.detalles.map(det => {
           return {
             id_producto: det.id_producto,
-            descripcion_producto: det.descripcion_personalizada || (det.producto ? (det.producto.nombre || det.producto.name) : ''),
+            // Igual que en la factura y en SUNAT: "Nombre del producto - Descripción personalizada"
+            descripcion_producto: [det.producto?.nombre || det.producto?.name, det.descripcion_personalizada]
+              .map(p => (p || '').trim()).filter(Boolean).join(' - '),
             cantidad: det.cantidad,
             unidad: 'NIU',
             pedido: `${v.serie}-${v.correlativo}`,

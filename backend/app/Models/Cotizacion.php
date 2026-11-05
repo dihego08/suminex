@@ -16,6 +16,7 @@ class Cotizacion extends Model
         'base_imponible',
         'igv',
         'aplica_igv',
+        'incluye_igv',
         'total',
         'estado',
         'terminos_condiciones'

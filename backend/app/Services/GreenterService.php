@@ -70,7 +70,7 @@ class GreenterService
             $items[] = (new SaleDetail())
                 ->setCodProducto($d->id_producto)
                 ->setUnidad('NIU') // Asumir Unidad estándar
-                ->setDescripcion($d->descripcion_personalizada ?: $d->producto->nombre)
+                ->setDescripcion($d->descripcion_completa)
                 ->setCantidad($cantidad)
                 ->setMtoValorUnitario(round($valorUnitario, 6))
                 ->setMtoValorVenta($valorLinea)
@@ -230,7 +230,7 @@ class GreenterService
             $item = (new SaleDetail())
                 ->setCodProducto($d->id_producto)
                 ->setUnidad('NIU')
-                ->setDescripcion($d->descripcion_personalizada ?: $d->producto->nombre)
+                ->setDescripcion($d->descripcion_completa)
                 ->setCantidad($d->cantidad)
                 ->setMtoValorUnitario($d->precio_unitario)
                 ->setMtoValorVenta($d->cantidad * $d->precio_unitario)

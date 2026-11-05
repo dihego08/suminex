@@ -284,9 +284,10 @@ class GuiaRemisionService
 
     private function obtenerDetallesGuia(int $idGuia): array
     {
+        // id_producto apunta al catálogo actual (productos), no a la tabla antigua product
         $detalles = DB::table('guia_detalle as g')
-            ->leftJoin('product as p', 'g.id_producto', '=', 'p.id')
-            ->select('g.*', 'p.code', 'p.description')
+            ->leftJoin('productos as p', 'g.id_producto', '=', 'p.id')
+            ->select('g.*', 'p.codigo as code', 'p.nombre as description')
             ->where('g.id_guia', $idGuia)
             ->get();
 
