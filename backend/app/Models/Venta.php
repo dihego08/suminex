@@ -11,6 +11,7 @@ class Venta extends Model
     protected $fillable = [
         'id_cliente',
         'id_orden_pedido',
+        'orden_compra',
         'id_forma_pago',
         'id_estado_pago',
         'id_estado_entrega',

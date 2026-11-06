@@ -68,6 +68,7 @@ class VentaController extends Controller
             'subtotal' => 'required|numeric',
             'igv' => 'required|numeric',
             'total' => 'required|numeric',
+            'orden_compra' => 'nullable|string|max:50',
             'detalles' => 'required|array',
         ]);
 
@@ -81,6 +82,7 @@ class VentaController extends Controller
             $venta = Venta::create([
                 'id_cliente' => $request->id_cliente,
                 'id_orden_pedido' => $request->id_orden_pedido ?? null,
+                'orden_compra' => $request->orden_compra,
                 'id_forma_pago' => $request->id_forma_pago ?? null,
                 'id_estado_pago' => $request->id_estado_pago ?? null,
                 'id_estado_entrega' => $request->id_estado_entrega ?? null,
@@ -140,6 +142,8 @@ class VentaController extends Controller
             return response()->json(['error' => 'No se puede editar una venta ya enviada a SUNAT'], 400);
         }
 
+        $this->validate($request, ['orden_compra' => 'nullable|string|max:50']);
+
         $ordenAnterior = $venta->id_orden_pedido;
         $ordenNueva = $request->id_orden_pedido ?? null;
         if ($ordenNueva != $ordenAnterior && ($error = $this->validarOrdenDisponible($ordenNueva))) {
@@ -151,6 +155,7 @@ class VentaController extends Controller
             $venta->update([
                 'id_cliente' => $request->id_cliente,
                 'id_orden_pedido' => $request->id_orden_pedido ?? null,
+                'orden_compra' => $request->orden_compra,
                 'id_forma_pago' => $request->id_forma_pago ?? null,
                 'id_estado_pago' => $request->id_estado_pago ?? null,
                 'id_estado_entrega' => $request->id_estado_entrega ?? null,
@@ -363,7 +368,7 @@ class VentaController extends Controller
             . '<tr>' . $fila($labelDoc . ':', $h::valor($docCliente)) . $fila('Moneda:', $esUsd ? 'DÓLARES (USD)' : 'SOLES (PEN)') . '</tr>'
             . '<tr>' . $fila('Dirección:', $h::valor($cliente->direccion ?? '')) . $fila('Forma de pago:', $esCredito ? 'Crédito' : 'Contado') . '</tr>'
             . '<tr>' . $fila('Teléfono:', $h::valor($cliente->telefono ?? '')) . $fila('Vencimiento:', $esCredito ? $h::fecha($venta->fecha_vencimiento) : '—') . '</tr>'
-            . '<tr>' . $fila('Cotización ref.:', $h::valor($cotizacionRef)) . $fila('Orden de compra:', '—') . '</tr>'
+            . '<tr>' . $fila('Cotización ref.:', $h::valor($cotizacionRef)) . $fila('Orden de compra:', $h::valor($venta->orden_compra)) . '</tr>'
             . '</table></div>'
 
             . '<div style="border: 1px solid #555; border-top: none;">'

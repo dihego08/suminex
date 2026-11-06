@@ -24,6 +24,7 @@ const NuevaVenta = () => {
     correlativo: '',
     fecha_emision: fechaLocal(),
     fecha_vencimiento: fechaLocal(),
+    orden_compra: '',
     terminos_condiciones: '',
     descuento: 0,
     desc_descuento: '',
@@ -147,7 +148,8 @@ const NuevaVenta = () => {
         id_forma_pago: v.id_forma_pago || 1,
         id_estado_pago: v.id_estado_pago || 1,
         id_estado_entrega: v.id_estado_entrega || 1,
-        id_orden_pedido: v.id_orden_pedido || null
+        id_orden_pedido: v.id_orden_pedido || null,
+        orden_compra: v.orden_compra || ''
       });
       if (v.orden_pedido) {
         setSearchOrdenTerm(v.orden_pedido.numero || `OP-${String(v.orden_pedido.id).padStart(5, '0')}`);
@@ -460,6 +462,20 @@ const NuevaVenta = () => {
                 type="date" required
                 value={formData.fecha_vencimiento}
                 onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
+                className={inputClassName}
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <FileText size={16} className="text-gray-400" /> N° Orden de Compra
+              </label>
+              <input
+                type="text"
+                maxLength={50}
+                placeholder="Orden de compra del cliente"
+                value={formData.orden_compra}
+                onChange={(e) => setFormData({ ...formData, orden_compra: e.target.value })}
                 className={inputClassName}
               />
             </div>

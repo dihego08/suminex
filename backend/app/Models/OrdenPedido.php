@@ -19,7 +19,8 @@ class OrdenPedido extends Model
         'aplica_igv',
         'incluye_igv',
         'total',
-        'terminos_condiciones'
+        'terminos_condiciones',
+        'orden_compra_archivo'
     ];
 
     public function cotizacion()

@@ -24,6 +24,11 @@ const NuevaOrden = () => {
     terminos_condiciones: 'Condiciones Generales:\n- Validez de la oferta: 15 días.\n- Tiempo de entrega: Previa coordinación.\n- Forma de pago: Al contado.'
   });
 
+  // PDF de la orden de compra del cliente (solo al editar)
+  const [ordenCompraActual, setOrdenCompraActual] = useState(null);
+  const [ordenCompraNueva, setOrdenCompraNueva] = useState(null);
+  const ordenCompraInputRef = useRef(null);
+
   // Client Search State
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -52,7 +57,8 @@ const NuevaOrden = () => {
           incluye_igv: cot.incluye_igv == 1,
           terminos_condiciones: cot.terminos_condiciones || ''
         });
-        
+        setOrdenCompraActual(cot.orden_compra_archivo || null);
+
         if (cot.cliente) {
           setSearchTerm(`${cot.cliente.razon_social} (RUC: ${cot.cliente.ruc})`);
         }
@@ -167,6 +173,38 @@ const NuevaOrden = () => {
     total = rawTotal;
   }
 
+  const seleccionarOrdenCompra = (e) => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    if (!archivo.name.toLowerCase().endsWith('.pdf')) {
+      alert('La orden de compra debe ser un archivo PDF.');
+      e.target.value = '';
+      return;
+    }
+    if (archivo.size > 10 * 1024 * 1024) {
+      alert('El PDF no puede pesar más de 10 MB.');
+      e.target.value = '';
+      return;
+    }
+    setOrdenCompraNueva(archivo);
+  };
+
+  const descartarOrdenCompraNueva = () => {
+    setOrdenCompraNueva(null);
+    if (ordenCompraInputRef.current) ordenCompraInputRef.current.value = '';
+  };
+
+  const quitarOrdenCompra = async () => {
+    if (!window.confirm('¿Quitar la orden de compra adjunta? El archivo se eliminará.')) return;
+    try {
+      await axios.delete(`${API_URL}/ordenes/${id}/orden-compra`);
+      setOrdenCompraActual(null);
+    } catch (error) {
+      console.error(error);
+      alert('No se pudo quitar la orden de compra.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.id_cliente) {
@@ -198,6 +236,23 @@ const NuevaOrden = () => {
 
       if (isEditing) {
         await axios.put(`${API_URL}/ordenes/${id}`, payload);
+
+        if (ordenCompraNueva) {
+          try {
+            const form = new FormData();
+            form.append('archivo', ordenCompraNueva);
+            const res = await axios.post(`${API_URL}/ordenes/${id}/orden-compra`, form);
+            setOrdenCompraActual(res.data.orden_compra_archivo);
+            descartarOrdenCompraNueva();
+          } catch (error) {
+            // El pedido ya se guardó: se queda en la pantalla para reintentar solo el archivo
+            console.error(error);
+            const data = error.response?.data;
+            const detalle = data?.errors ? Object.values(data.errors).flat().join('\n') : (data?.message || error.message);
+            alert('La orden de pedido se guardó, pero no se pudo adjuntar el PDF:\n' + detalle);
+            return;
+          }
+        }
       } else {
         await axios.post(`${API_URL}/ordenes`, payload);
       }
@@ -520,6 +575,44 @@ const NuevaOrden = () => {
                onChange={(e) => setFormData({...formData, terminos_condiciones: e.target.value})}
                className="w-full border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm resize-y"
              ></textarea>
+
+             {isEditing && (
+               <div className="mt-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                   Orden de compra del cliente (PDF, máx. 10 MB)
+                 </label>
+
+                 {ordenCompraActual && (
+                   <div className="flex items-center justify-between gap-3 mb-3 p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                     <a
+                       href={`${SERVER_URL}/uploads/ordenes_compra/${encodeURIComponent(ordenCompraActual)}`}
+                       target="_blank"
+                       rel="noreferrer"
+                       className="flex items-center gap-2 text-blue-600 hover:underline font-medium"
+                     >
+                       <FileText size={16} /> Ver orden de compra adjunta
+                     </a>
+                     <button type="button" onClick={quitarOrdenCompra} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Quitar orden de compra">
+                       <Trash2 size={16} />
+                     </button>
+                   </div>
+                 )}
+
+                 <input
+                   ref={ordenCompraInputRef}
+                   type="file"
+                   accept="application/pdf,.pdf"
+                   onChange={seleccionarOrdenCompra}
+                   className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                 />
+                 {ordenCompraNueva && (
+                   <p className="mt-2 text-xs text-gray-500">
+                     Se adjuntará al guardar{ordenCompraActual ? ' y reemplazará el archivo actual' : ''}.{' '}
+                     <button type="button" onClick={descartarOrdenCompraNueva} className="text-red-500 hover:underline">Descartar</button>
+                   </p>
+                 )}
+               </div>
+             )}
           </div>
 
           <div className="w-full md:w-80 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">

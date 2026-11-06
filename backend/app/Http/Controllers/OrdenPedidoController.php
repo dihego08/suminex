@@ -12,6 +12,8 @@ use App\Models\OrdenPedidoDetalle;
 
 class OrdenPedidoController extends Controller
 {
+    private const CARPETA_ORDEN_COMPRA = 'uploads/ordenes_compra';
+
     public function index()
     {
         // Traemos el cliente y detalles nativos, o el cliente y detalles de la cotización asociada (por compatibilidad)
@@ -183,6 +185,55 @@ class OrdenPedidoController extends Controller
         }
     }
 
+    /**
+     * Adjunta (o reemplaza) el PDF de la orden de compra que envió el cliente.
+     */
+    public function subirOrdenCompra(Request $request, $id)
+    {
+        $orden = OrdenPedido::findOrFail($id);
+
+        $this->validate($request, [
+            'archivo' => 'required|file|mimes:pdf|max:10240',
+        ], [
+            'archivo.required' => 'Seleccione el archivo PDF de la orden de compra.',
+            'archivo.mimes' => 'La orden de compra debe ser un archivo PDF.',
+            'archivo.max' => 'El PDF no puede pesar más de 10 MB.',
+        ]);
+
+        $file = $request->file('archivo');
+        $nombre = preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+        $filename = 'orden_' . $orden->id . '_' . time() . '_' . $nombre;
+        $file->move(public_path(self::CARPETA_ORDEN_COMPRA), $filename);
+
+        $anterior = $orden->orden_compra_archivo;
+        $orden->orden_compra_archivo = $filename;
+        $orden->save();
+        $this->borrarArchivoOrdenCompra($anterior);
+
+        return response()->json(['orden_compra_archivo' => $filename]);
+    }
+
+    public function quitarOrdenCompra($id)
+    {
+        $orden = OrdenPedido::findOrFail($id);
+        $anterior = $orden->orden_compra_archivo;
+        $orden->orden_compra_archivo = null;
+        $orden->save();
+        $this->borrarArchivoOrdenCompra($anterior);
+
+        return response()->json(['message' => 'Orden de compra quitada']);
+    }
+
+    private function borrarArchivoOrdenCompra(?string $archivo): void
+    {
+        if ($archivo) {
+            $ruta = public_path(self::CARPETA_ORDEN_COMPRA . '/' . basename($archivo));
+            if (file_exists($ruta)) {
+                unlink($ruta);
+            }
+        }
+    }
+
     public function destroy($id)
     {
         $orden = OrdenPedido::findOrFail($id);
@@ -199,8 +250,10 @@ class OrdenPedidoController extends Controller
             }
 
             OrdenPedidoDetalle::where('id_orden_pedido', $id)->delete();
+            $archivoOrdenCompra = $orden->orden_compra_archivo;
             $orden->delete();
             DB::commit();
+            $this->borrarArchivoOrdenCompra($archivoOrdenCompra);
             return response()->json(['message' => 'Orden eliminada correctamente']);
         } catch (\Exception $e) {
             DB::rollBack();

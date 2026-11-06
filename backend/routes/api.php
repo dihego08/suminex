@@ -69,6 +69,8 @@ Route::get('/', function () {
     Route::post('ordenes', [OrdenPedidoController::class, 'store']);
     Route::put('ordenes/{id}', [OrdenPedidoController::class, 'update']);
     Route::delete('ordenes/{id}', [OrdenPedidoController::class, 'destroy']);
+    Route::post('ordenes/{id}/orden-compra', [OrdenPedidoController::class, 'subirOrdenCompra']);
+    Route::delete('ordenes/{id}/orden-compra', [OrdenPedidoController::class, 'quitarOrdenCompra']);
 
     // Rutas para Ventas y Facturación Electrónica (Greenter)
     Route::get('ventas', [VentaController::class, 'index']);
