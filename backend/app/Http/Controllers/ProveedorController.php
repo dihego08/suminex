@@ -43,6 +43,11 @@ class ProveedorController extends Controller
             'direccion' => 'nullable|string',
             'telefono' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',
+            'contacto_nombre' => 'nullable|string|max:150',
+            'contacto_cargo' => 'nullable|string|max:100',
+            'rubro' => 'nullable|string|max:100',
+            'ubicacion' => 'nullable|string|max:255',
+            'observaciones' => 'nullable|string',
         ]);
 
         $proveedor = Proveedor::create([
@@ -51,6 +56,11 @@ class ProveedorController extends Controller
             'direccion' => $request->direccion,
             'telefono' => $request->telefono,
             'email' => $request->email,
+            'contacto_nombre' => $request->contacto_nombre,
+            'contacto_cargo' => $request->contacto_cargo,
+            'rubro' => $request->rubro,
+            'ubicacion' => $request->ubicacion,
+            'observaciones' => $request->observaciones,
             'estado' => $request->estado ?? 1,
         ]);
 
@@ -67,10 +77,16 @@ class ProveedorController extends Controller
             'direccion' => 'nullable|string',
             'telefono' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',
+            'contacto_nombre' => 'nullable|string|max:150',
+            'contacto_cargo' => 'nullable|string|max:100',
+            'rubro' => 'nullable|string|max:100',
+            'ubicacion' => 'nullable|string|max:255',
+            'observaciones' => 'nullable|string',
         ]);
 
         $proveedor->update($request->only([
-            'razon_social', 'ruc', 'direccion', 'telefono', 'email', 'estado'
+            'razon_social', 'ruc', 'direccion', 'telefono', 'email',
+            'contacto_nombre', 'contacto_cargo', 'rubro', 'ubicacion', 'observaciones', 'estado'
         ]));
 
         return response()->json($proveedor);

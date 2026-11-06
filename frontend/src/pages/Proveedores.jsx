@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Plus, Edit, Trash2, Truck, Phone, Mail, MapPin, X } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Truck, Phone, Mail, MapPin, X, FileText } from 'lucide-react';
 import { SERVER_URL } from '../config';
+
+const FORM_VACIO = {
+  razon_social: '',
+  ruc: '',
+  direccion: '',
+  telefono: '',
+  email: '',
+  contacto_nombre: '',
+  contacto_cargo: '',
+  rubro: '',
+  ubicacion: '',
+  observaciones: '',
+  estado: 1
+};
 
 const Proveedores = () => {
   const [proveedores, setProveedores] = useState([]);
@@ -13,15 +27,9 @@ const Proveedores = () => {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProveedor, setEditingProveedor] = useState(null);
-  const [formData, setFormData] = useState({
-    razon_social: '',
-    ruc: '',
-    direccion: '',
-    telefono: '',
-    email: '',
-    estado: 1
-  });
+  const [formData, setFormData] = useState(FORM_VACIO);
   const [submitting, setSubmitting] = useState(false);
+  const [proveedorObservaciones, setProveedorObservaciones] = useState(null);
 
   useEffect(() => {
     fetchProveedores();
@@ -55,18 +63,16 @@ const Proveedores = () => {
         direccion: prov.direccion || '',
         telefono: prov.telefono || '',
         email: prov.email || '',
+        contacto_nombre: prov.contacto_nombre || '',
+        contacto_cargo: prov.contacto_cargo || '',
+        rubro: prov.rubro || '',
+        ubicacion: prov.ubicacion || '',
+        observaciones: prov.observaciones || '',
         estado: prov.estado ?? 1
       });
     } else {
       setEditingProveedor(null);
-      setFormData({
-        razon_social: '',
-        ruc: '',
-        direccion: '',
-        telefono: '',
-        email: '',
-        estado: 1
-      });
+      setFormData(FORM_VACIO);
     }
     setModalOpen(true);
   };
@@ -147,7 +153,9 @@ const Proveedores = () => {
               <tr className="bg-gray-50/75 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 <th className="py-3 px-4">RUC</th>
                 <th className="py-3 px-4">Razón Social</th>
+                <th className="py-3 px-4">Rubro</th>
                 <th className="py-3 px-4">Dirección</th>
+                <th className="py-3 px-4">Ubicación</th>
                 <th className="py-3 px-4">Contacto</th>
                 <th className="py-3 px-4 text-center">Estado</th>
                 <th className="py-3 px-4 text-right">Acciones</th>
@@ -156,13 +164,13 @@ const Proveedores = () => {
             <tbody className="divide-y divide-gray-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-400">
+                  <td colSpan="8" className="py-8 text-center text-gray-400">
                     Cargando proveedores...
                   </td>
                 </tr>
               ) : proveedores.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-400">
+                  <td colSpan="8" className="py-8 text-center text-gray-400">
                     No se encontraron proveedores registrados.
                   </td>
                 </tr>
@@ -171,6 +179,7 @@ const Proveedores = () => {
                   <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-3 px-4 font-mono font-bold text-gray-700">{p.ruc}</td>
                     <td className="py-3 px-4 font-medium text-gray-900">{p.razon_social}</td>
+                    <td className="py-3 px-4 text-xs text-gray-600">{p.rubro || '-'}</td>
                     <td className="py-3 px-4 text-gray-500 max-w-xs truncate" title={p.direccion}>
                       {p.direccion ? (
                         <span className="flex items-center gap-1.5 text-xs text-gray-600">
@@ -180,7 +189,10 @@ const Proveedores = () => {
                         '-'
                       )}
                     </td>
+                    <td className="py-3 px-4 text-xs text-gray-600">{p.ubicacion || '-'}</td>
                     <td className="py-3 px-4 text-gray-600 space-y-0.5 text-xs">
+                      {p.contacto_nombre && <div className="font-medium text-gray-800">{p.contacto_nombre}</div>}
+                      {p.contacto_cargo && <div className="text-gray-500">{p.contacto_cargo}</div>}
                       {p.telefono && (
                         <div className="flex items-center gap-1">
                           <Phone size={12} className="text-gray-400" /> {p.telefono}
@@ -191,7 +203,7 @@ const Proveedores = () => {
                           <Mail size={12} className="text-gray-400" /> {p.email}
                         </div>
                       )}
-                      {!p.telefono && !p.email && <span className="text-gray-400">-</span>}
+                      {!p.contacto_nombre && !p.contacto_cargo && !p.telefono && !p.email && <span className="text-gray-400">-</span>}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span
@@ -206,6 +218,15 @@ const Proveedores = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {p.observaciones && (
+                          <button
+                            onClick={() => setProveedorObservaciones(p)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-brand-600 transition-colors"
+                            title="Ver observaciones"
+                          >
+                            <FileText size={16} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleOpenModal(p)}
                           className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-brand-600 transition-colors"
@@ -253,10 +274,32 @@ const Proveedores = () => {
         )}
       </div>
 
+      {/* Modal Observaciones */}
+      {proveedorObservaciones && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-gray-100 overflow-y-auto max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/50">
+              <div className="min-w-0">
+                <h3 className="font-bold text-gray-800 text-lg">Observaciones</h3>
+                <p className="text-sm text-gray-500 break-words">{proveedorObservaciones.razon_social}</p>
+              </div>
+              <button
+                onClick={() => setProveedorObservaciones(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="p-6 text-sm text-gray-700 whitespace-pre-wrap break-words">{proveedorObservaciones.observaciones}</p>
+          </div>
+        </div>
+      )}
+
       {/* Modal Crear / Editar */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-gray-100 overflow-y-auto max-h-[90vh] animate-in fade-in zoom-in-95 duration-150">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <h3 className="font-bold text-gray-800 text-lg">
                 {editingProveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
@@ -325,6 +368,63 @@ const Proveedores = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
                   placeholder="contacto@proveedor.com"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Nombre de Contacto</label>
+                  <input
+                    type="text"
+                    maxLength={150}
+                    value={formData.contacto_nombre}
+                    onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                    placeholder="Persona de contacto"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Cargo</label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={formData.contacto_cargo}
+                    onChange={(e) => setFormData({ ...formData, contacto_cargo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                    placeholder="Ej. Ejecutivo de ventas"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Rubro</label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={formData.rubro}
+                    onChange={(e) => setFormData({ ...formData, rubro: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                    placeholder="Ej. Ferretería"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Ubicación</label>
+                  <input
+                    type="text"
+                    maxLength={255}
+                    value={formData.ubicacion}
+                    onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                    placeholder="Ej. Arequipa"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Observaciones</label>
+                <textarea
+                  rows={3}
+                  value={formData.observaciones}
+                  onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm resize-y"
                 />
               </div>
 

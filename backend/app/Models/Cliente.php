@@ -24,6 +24,8 @@ class Cliente extends Model
         'direccion',
         'telefono',
         'email',
+        'contacto_nombre',
+        'rubro',
         'estado',
         'tipo_pago',
         'banco',

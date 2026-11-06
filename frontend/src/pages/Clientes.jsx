@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, Search, User, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, User, X, Phone, Smartphone, Mail } from 'lucide-react';
 
 import { API_URL } from '../config';
 
@@ -11,7 +11,7 @@ const Clientes = () => {
 
   // Estados para el Modal
   const emptyForm = {
-    ruc: '', razon_social: '', direccion: '', telefono: '', email: '',
+    ruc: '', razon_social: '', direccion: '', telefono: '', email: '', contacto_nombre: '', rubro: '',
     tipo_pago: 0, banco: 'BCP', nro_cuenta: '', whatsapp: '', tiene_credito: false, limite_credito: ''
   };
   const [showModal, setShowModal] = useState(false);
@@ -47,6 +47,8 @@ const Clientes = () => {
       direccion: cliente.direccion || '',
       telefono: cliente.telefono || '',
       email: cliente.email || '',
+      contacto_nombre: cliente.contacto_nombre || '',
+      rubro: cliente.rubro || '',
       tipo_pago: Number(cliente.tipo_pago) || 0,
       banco: cliente.banco || 'BCP',
       nro_cuenta: cliente.nro_cuenta || '',
@@ -131,6 +133,7 @@ const Clientes = () => {
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-500 text-sm uppercase tracking-wider">
                   <th className="p-4 font-semibold">RUC</th>
                   <th className="p-4 font-semibold">Razón Social</th>
+                  <th className="p-4 font-semibold">Rubro</th>
                   <th className="p-4 font-semibold">Dirección</th>
                   <th className="p-4 font-semibold">Contacto</th>
                   <th className="p-4 font-semibold text-center">Estado</th>
@@ -140,7 +143,7 @@ const Clientes = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredClientes.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-gray-500">
+                    <td colSpan="7" className="p-8 text-center text-gray-500">
                       No se encontraron clientes
                     </td>
                   </tr>
@@ -156,10 +159,26 @@ const Clientes = () => {
                           <span className="font-medium text-gray-800">{cliente.razon_social}</span>
                         </div>
                       </td>
+                      <td className="p-4 text-gray-600 text-sm">{cliente.rubro || '-'}</td>
                       <td className="p-4 text-gray-600 text-sm">{cliente.direccion || 'No especificada'}</td>
-                      <td className="p-4 text-gray-600 text-sm">
-                        {cliente.telefono && <div>{cliente.telefono}</div>}
-                        {cliente.email && <div>{cliente.email}</div>}
+                      <td className="p-4 text-gray-600 text-sm space-y-0.5">
+                        {cliente.contacto_nombre && <div className="font-medium text-gray-800">{cliente.contacto_nombre}</div>}
+                        {cliente.telefono && (
+                          <div className="flex items-center gap-1.5" title="Teléfono">
+                            <Phone size={13} className="text-gray-400 shrink-0" /> {cliente.telefono}
+                          </div>
+                        )}
+                        {cliente.whatsapp && (
+                          <div className="flex items-center gap-1.5" title="Celular / WhatsApp">
+                            <Smartphone size={13} className="text-gray-400 shrink-0" /> {cliente.whatsapp}
+                          </div>
+                        )}
+                        {cliente.email && (
+                          <div className="flex items-center gap-1.5" title="Email">
+                            <Mail size={13} className="text-gray-400 shrink-0" /> {cliente.email}
+                          </div>
+                        )}
+                        {!cliente.contacto_nombre && !cliente.telefono && !cliente.whatsapp && !cliente.email && <span className="text-gray-400">-</span>}
                       </td>
                       <td className="p-4 text-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cliente.estado ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -189,7 +208,7 @@ const Clientes = () => {
       {/* Modal de Nuevo / Editar Cliente */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-y-auto max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}</h3>
               <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -225,6 +244,17 @@ const Clientes = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de Contacto</label>
+                    <input type="text" maxLength={150} value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Rubro</label>
+                    <input type="text" maxLength={100} value={formData.rubro} onChange={(e) => setFormData({ ...formData, rubro: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
