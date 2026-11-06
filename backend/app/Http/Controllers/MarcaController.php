@@ -10,13 +10,13 @@ class MarcaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('brand')->select('id', 'name', 'description', 'image', 'created_at');
+        $query = DB::table('brand')->select('id', 'codigo', 'name', 'description', 'image', 'created_at');
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $marcas = $query->orderBy('name')->get();
+        $marcas = $query->orderBy('codigo')->get();
 
         // Cantidad de productos por marca (los productos guardan el nombre de la marca)
         $conteo = DB::table('productos')
@@ -50,12 +50,19 @@ class MarcaController extends Controller
             'image' => 'nullable|image|max:5120',
         ]);
 
-        $id = DB::table('brand')->insertGetId([
-            'name' => trim($request->name),
-            'description' => $request->description,
-            'image' => $this->guardarImagen($request),
-            'created_at' => now(),
-        ]);
+        $imagen = $this->guardarImagen($request);
+
+        $id = DB::transaction(function () use ($request, $imagen) {
+            $ultimo = (int) DB::table('brand')->lockForUpdate()->selectRaw('MAX(CAST(codigo AS UNSIGNED)) as ultimo')->value('ultimo');
+
+            return DB::table('brand')->insertGetId([
+                'codigo' => str_pad((string) ($ultimo + 1), 2, '0', STR_PAD_LEFT),
+                'name' => trim($request->name),
+                'description' => $request->description,
+                'image' => $imagen,
+                'created_at' => now(),
+            ]);
+        });
 
         return response()->json(DB::table('brand')->where('id', $id)->first(), 201);
     }

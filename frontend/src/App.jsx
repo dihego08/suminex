@@ -31,6 +31,7 @@ import FormOrdenCompra from './pages/FormOrdenCompra';
 import NuevaNotaAlmacen from './pages/NuevaNotaAlmacen';
 import Proveedores from './pages/Proveedores';
 import Marcas from './pages/Marcas';
+import Categorias from './pages/Categorias';
 import Guias from './pages/Guias';
 import NuevaGuia from './pages/NuevaGuia';
 import EditarGuia from './pages/EditarGuia';
@@ -66,6 +67,7 @@ function App() {
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/marcas" element={<Marcas />} />
+          <Route path="/categorias" element={<Categorias />} />
           <Route path="/cotizaciones" element={<Cotizaciones />} />
           <Route path="/cotizaciones/nueva" element={<NuevaCotizacion />} />
           <Route path="/cotizaciones/editar/:id" element={<NuevaCotizacion />} />

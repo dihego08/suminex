@@ -22,6 +22,7 @@ class Producto extends Model
         'codigo',
         'descripcion',
         'marca',
+        'id_categoria',
         'precio_base',
         'stock',
         'unidad_medida',

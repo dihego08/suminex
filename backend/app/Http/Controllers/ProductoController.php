@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Models\ProductoUnidad;
+use App\Services\CodigoProductoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ProductoController extends Controller
 {
+    private const TIPO_SERVICIO = 2;
+
+    private const REGLAS_CODIGO_AUTOMATICO = [
+        'marca' => 'required|exists:brand,name',
+        'id_categoria' => 'required|integer|exists:categorias,id',
+    ];
+
     public function index()
     {
         $productos = Producto::activos()->with(['preciosClientes.cliente', 'unidadesSecundarias'])->get();
@@ -21,19 +30,35 @@ class ProductoController extends Controller
         return response()->json($producto);
     }
 
+    public function siguienteCodigo(Request $request)
+    {
+        $this->validate($request, self::REGLAS_CODIGO_AUTOMATICO);
+
+        return response()->json([
+            'codigo' => CodigoProductoService::generar($request->marca, (int) $request->id_categoria),
+        ]);
+    }
+
     public function store(Request $request)
     {
-        // El código es único en BD también para productos dados de baja
-        $eliminado = Producto::where('codigo', $request->codigo)->where('estado', 0)->exists();
-        if ($eliminado) {
-            return response()->json([
-                'message' => 'El código ya pertenece a un producto eliminado.',
-                'errors' => ['codigo' => ['El código "' . $request->codigo . '" ya pertenece a un producto eliminado. Use otro código.']],
-            ], 422);
+        // Los productos reciben un código automático; los servicios no tienen marca y conservan el código manual
+        $codigoAutomatico = (int) $request->input('tipo', 1) !== self::TIPO_SERVICIO;
+
+        if (!$codigoAutomatico) {
+            // El código es único en BD también para productos dados de baja
+            $eliminado = Producto::where('codigo', $request->codigo)->where('estado', 0)->exists();
+            if ($eliminado) {
+                return response()->json([
+                    'message' => 'El código ya pertenece a un producto eliminado.',
+                    'errors' => ['codigo' => ['El código "' . $request->codigo . '" ya pertenece a un producto eliminado. Use otro código.']],
+                ], 422);
+            }
         }
 
-        $this->validate($request, [
+        $this->validate($request, ($codigoAutomatico ? self::REGLAS_CODIGO_AUTOMATICO : [
             'codigo' => 'required|unique:productos',
+            'id_categoria' => 'nullable|integer|exists:categorias,id',
+        ]) + [
             'descripcion' => 'nullable|string',
             'precio_base' => 'required|numeric',
             'precio_compra' => 'nullable|numeric',
@@ -45,6 +70,10 @@ class ProductoController extends Controller
 
         DB::beginTransaction();
         try {
+            if ($codigoAutomatico) {
+                $data['codigo'] = CodigoProductoService::generar($data['marca'], (int) $data['id_categoria']);
+            }
+
             $producto = Producto::create($data);
 
             $unidades = $request->input('unidades_secundarias');
@@ -65,6 +94,9 @@ class ProductoController extends Controller
 
             DB::commit();
             return response()->json($producto, 201);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => 'Error al crear producto', 'msg' => $e->getMessage()], 500);
@@ -77,6 +109,7 @@ class ProductoController extends Controller
 
         $this->validate($request, [
             'codigo' => 'required|unique:productos,codigo,' . $producto->id,
+            'id_categoria' => 'nullable|integer|exists:categorias,id',
             'descripcion' => 'nullable|string',
             'precio_base' => 'required|numeric',
             'precio_compra' => 'nullable|numeric',
@@ -127,6 +160,7 @@ class ProductoController extends Controller
         $data = $request->except(['unidades_secundarias', 'imagen', 'ficha_tecnica', '_method', 'estado']);
 
         $data['descripcion'] = $request->input('descripcion') ?? '';
+        $data['id_categoria'] = $request->input('id_categoria') ?: null;
 
         $precioCompra = $request->input('precio_compra');
         $data['precio_compra'] = is_numeric($precioCompra) ? $precioCompra : 0;

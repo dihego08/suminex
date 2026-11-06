@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CodigoSunatController;
 use App\Http\Controllers\MarcaController;
+use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\OrdenPedidoController;
@@ -36,6 +37,7 @@ Route::get('/', function () {
     
     // Rutas para Productos
     Route::get('productos', [ProductoController::class, 'index']);
+    Route::get('productos/siguiente-codigo', [ProductoController::class, 'siguienteCodigo']);
     Route::get('productos/{id}', [ProductoController::class, 'show']);
     Route::post('productos', [ProductoController::class, 'store']);
     Route::put('productos/{id}', [ProductoController::class, 'update']);
@@ -48,6 +50,11 @@ Route::get('/', function () {
     Route::post('marcas', [MarcaController::class, 'store']);
     Route::put('marcas/{id}', [MarcaController::class, 'update']);
     Route::delete('marcas/{id}', [MarcaController::class, 'destroy']);
+
+    Route::get('categorias', [CategoriaController::class, 'index']);
+    Route::post('categorias', [CategoriaController::class, 'store']);
+    Route::put('categorias/{id}', [CategoriaController::class, 'update']);
+    Route::delete('categorias/{id}', [CategoriaController::class, 'destroy']);
 
     // Rutas para Clientes
     Route::get('clientes', [ClienteController::class, 'index']);

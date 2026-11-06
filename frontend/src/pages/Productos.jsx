@@ -8,6 +8,8 @@ const Productos = () => {
   const [productos, setProductos] = useState([]);
   const [codigosSunat, setCodigosSunat] = useState([]);
   const [marcas, setMarcas] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [codigoSiguiente, setCodigoSiguiente] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -19,6 +21,7 @@ const Productos = () => {
     codigo: '',
     descripcion: '',
     marca: '',
+    id_categoria: '',
     unidad_medida: 'UND',
     stock: 0,
     precio_base: 0,
@@ -42,7 +45,34 @@ const Productos = () => {
     fetchProductos();
     fetchCodigosSunat();
     fetchMarcas();
+    fetchCategorias();
   }, []);
+
+  // Los productos nuevos reciben el código automático; los servicios no tienen marca y lo llevan manual
+  const codigoAutomatico = !editingId && Number(formData.tipo) !== 2;
+
+  useEffect(() => {
+    setCodigoSiguiente('');
+    if (!showModal || !codigoAutomatico || !formData.marca || !formData.id_categoria) return;
+
+    let vigente = true;
+    axios.get(`${API_URL}/productos/siguiente-codigo`, {
+      params: { marca: formData.marca, id_categoria: formData.id_categoria }
+    })
+      .then((res) => { if (vigente) setCodigoSiguiente(res.data.codigo); })
+      .catch((error) => console.error('Error al obtener el código:', error));
+
+    return () => { vigente = false; };
+  }, [showModal, codigoAutomatico, formData.marca, formData.id_categoria]);
+
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/categorias`);
+      setCategorias(response.data);
+    } catch (error) {
+      console.error('Error fetching categorias:', error);
+    }
+  };
 
   const fetchMarcas = async () => {
     try {
@@ -101,7 +131,7 @@ const Productos = () => {
 
       setShowModal(false);
       setEditingId(null);
-      setFormData({ codigo: '', descripcion: '', marca: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
+      setFormData({ codigo: '', descripcion: '', marca: '', id_categoria: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
       fetchProductos(); // Recargar la lista
     } catch (error) {
       const errores = error.response?.data?.errors;
@@ -117,6 +147,7 @@ const Productos = () => {
       codigo: producto.codigo || '',
       descripcion: producto.descripcion || '',
       marca: producto.marca || '',
+      id_categoria: producto.id_categoria || '',
       unidad_medida: producto.unidad_medida || 'UND',
       stock: producto.stock || 0,
       precio_base: producto.precio_base || 0,
@@ -173,7 +204,7 @@ const Productos = () => {
         <button
           onClick={() => {
             setEditingId(null);
-            setFormData({ codigo: '', descripcion: '', marca: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
+            setFormData({ codigo: '', descripcion: '', marca: '', id_categoria: '', unidad_medida: 'UND', stock: 0, precio_base: 0, tipo: 1, nombre: '', codigo_barras: '', presentacion: '', largo: '', ancho: '', alto: '', peso: '', stock_minimo: 10, precio_compra: 0, fecha_actualizacion: '', imagen: null, ficha_tecnica: null, unidades_secundarias: [] });
             setShowModal(true);
           }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/30"
@@ -306,7 +337,7 @@ const Productos = () => {
                 </div>
 
                 {/* Primera Fila */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                     <select value={formData.tipo} onChange={(e) => setFormData({ ...formData, tipo: parseInt(e.target.value) })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
@@ -315,21 +346,34 @@ const Productos = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Código/Modelo *</label>
-                    <input type="text" required value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cód. Barras</label>
-                    <input type="text" value={formData.codigo_barras} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
-                    <select value={formData.marca} onChange={(e) => setFormData({ ...formData, marca: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Marca{codigoAutomatico && ' *'}</label>
+                    <select required={codigoAutomatico} value={formData.marca} onChange={(e) => setFormData({ ...formData, marca: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                       <option value="">Seleccione una marca</option>
                       {marcas.map((m) => (
                         <option key={m.id} value={m.name}>{m.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría{codigoAutomatico && ' *'}</label>
+                    <select required={codigoAutomatico} value={formData.id_categoria} onChange={(e) => setFormData({ ...formData, id_categoria: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                      <option value="">Seleccione una categoría</option>
+                      {categorias.map((c) => (
+                        <option key={c.id} value={c.id}>{c.categoria}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Código/Modelo{!codigoAutomatico && ' *'}</label>
+                    {codigoAutomatico ? (
+                      <input type="text" readOnly value={codigoSiguiente} placeholder="Automático" title="Se genera con la marca y la categoría" className="w-full border border-gray-300 rounded-xl p-2.5 outline-none bg-gray-50 text-gray-700" />
+                    ) : (
+                      <input type="text" required value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cód. Barras</label>
+                    <input type="text" value={formData.codigo_barras} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 </div>
 

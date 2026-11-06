@@ -93,6 +93,7 @@ const Marcas = () => {
   };
 
   const filtered = marcas.filter(m =>
+    (m.codigo || '').includes(searchTerm) ||
     (m.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -120,7 +121,7 @@ const Marcas = () => {
         <Search className="text-gray-400" size={20} />
         <input
           type="text"
-          placeholder="Buscar por nombre o descripción..."
+          placeholder="Buscar por código, nombre o descripción..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-400"
@@ -133,6 +134,7 @@ const Marcas = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/75 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="py-3 px-4 w-16">Código</th>
                 <th className="py-3 px-4 w-16">Imagen</th>
                 <th className="py-3 px-4">Nombre</th>
                 <th className="py-3 px-4">Descripción</th>
@@ -143,19 +145,20 @@ const Marcas = () => {
             <tbody className="divide-y divide-gray-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-400">
+                  <td colSpan="6" className="py-8 text-center text-gray-400">
                     Cargando marcas...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-400">
+                  <td colSpan="6" className="py-8 text-center text-gray-400">
                     No se encontraron marcas registradas.
                   </td>
                 </tr>
               ) : (
                 filtered.map((m) => (
                   <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-gray-700">{m.codigo || '-'}</td>
                     <td className="py-3 px-4">
                       <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
                         {m.image ? (
