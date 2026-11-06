@@ -14,6 +14,8 @@ import NuevaVenta from './pages/NuevaVenta';
 import VentaPrint from './pages/VentaPrint';
 import Login from './pages/Login';
 import Permissions from './pages/Permissions';
+import Usuarios from './pages/Usuarios';
+import Cargos from './pages/Cargos';
 import PreciosCliente from './pages/PreciosCliente';
 import Compras from './pages/Compras';
 import NuevaCompra from './pages/NuevaCompra';
@@ -91,6 +93,8 @@ function App() {
           <Route path="/notas-almacen" element={<NotasAlmacen />} />
           <Route path="/notas-almacen/nueva/:tipo" element={<NuevaNotaAlmacen />} />
           <Route path="/permissions" element={<Permissions />} />
+          <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/cargos" element={<Cargos />} />
           <Route path="/precios-cliente" element={<PreciosCliente />} />
           <Route path="/guias" element={<Guias />} />
           <Route path="/guias/new" element={<NuevaGuia />} />

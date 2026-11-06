@@ -93,9 +93,27 @@ Route::get('/', function () {
 
     // Menús
     Route::get('menu/navigation', [MenuController::class, 'navigation']);
-    Route::get('permissions/users', [MenuController::class, 'users']);
-    Route::get('permissions/menus/{userId}', [MenuController::class, 'userMenus']);
-    Route::post('permissions/save', [MenuController::class, 'saveUserMenus']);
+    Route::middleware(\App\Http\Middleware\AccesoMenu::class . ':permissions')->group(function () {
+        Route::get('permissions/users', [MenuController::class, 'users']);
+        Route::get('permissions/menus/{userId}', [MenuController::class, 'userMenus']);
+        Route::post('permissions/save', [MenuController::class, 'saveUserMenus']);
+    });
+
+    // Usuarios y Cargos: requieren sesión válida y acceso al menú correspondiente
+    Route::middleware(\App\Http\Middleware\AccesoMenu::class . ':users')->group(function () {
+        Route::get('usuarios', [\App\Http\Controllers\UsuarioController::class, 'index']);
+        Route::get('usuarios/cargos', [\App\Http\Controllers\UsuarioController::class, 'cargos']);
+        Route::post('usuarios', [\App\Http\Controllers\UsuarioController::class, 'store']);
+        Route::put('usuarios/{id}', [\App\Http\Controllers\UsuarioController::class, 'update']);
+        Route::post('usuarios/{id}/estado', [\App\Http\Controllers\UsuarioController::class, 'cambiarEstado']);
+    });
+    Route::middleware(\App\Http\Middleware\AccesoMenu::class . ':cargos')->group(function () {
+        Route::get('cargos', [\App\Http\Controllers\CargoController::class, 'index']);
+        Route::get('cargos/clientes', [\App\Http\Controllers\CargoController::class, 'clientes']);
+        Route::post('cargos', [\App\Http\Controllers\CargoController::class, 'store']);
+        Route::put('cargos/{id}', [\App\Http\Controllers\CargoController::class, 'update']);
+        Route::delete('cargos/{id}', [\App\Http\Controllers\CargoController::class, 'destroy']);
+    });
 
     // Rutas para Compras
     Route::get('compras', [CompraController::class, 'index']);

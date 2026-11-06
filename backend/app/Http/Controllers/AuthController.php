@@ -21,9 +21,18 @@ class AuthController extends Controller
             return response()->json(['error' => 'Credenciales inválidas'], 401);
         }
 
-        // Verify SHA1 password (legacy systems often use sha1)
-        if (sha1(md5($request->password)) !== $user->password && sha1($request->password) !== $user->password && md5($request->password) !== $user->password && $request->password !== $user->password) {
+        // Las contraseñas creadas desde Usuarios van en bcrypt; las antiguas siguen en formatos legacy (sha1/md5)
+        $esBcrypt = password_get_info($user->password)['algo'] !== null;
+        $valida = $esBcrypt
+            ? password_verify($request->password, $user->password)
+            : (sha1(md5($request->password)) === $user->password || sha1($request->password) === $user->password || md5($request->password) === $user->password || $request->password === $user->password);
+
+        if (!$valida) {
             return response()->json(['error' => 'Credenciales inválidas'], 401);
+        }
+
+        if ((int) $user->status !== 1) {
+            return response()->json(['error' => 'Su usuario está desactivado. Consulte con el administrador.'], 403);
         }
 
         $token = Str::random(60);
