@@ -58,38 +58,119 @@ class GreenterService
 
         // Las líneas y los totales se calculan desde el detalle para que cuadren siempre
         // (SUNAT valida: suma de valor venta de líneas - descuento global = op. gravadas).
-        $items = [];
-        $sumaValorLineas = 0;
-        $sumaIgvLineas = 0;
+        $lineas = [];
         foreach ($detalles as $d) {
             $cantidad = (float) $d->cantidad;
             $valorUnitario = (float) $d->precio_unitario; // sin IGV
             $valorLinea = round($cantidad * $valorUnitario, 2);
             $igvLinea = round($valorLinea * 0.18, 2);
 
+            $lineas[] = [
+                'cod_producto' => $d->id_producto,
+                'descripcion' => $d->descripcion_completa,
+                'cantidad' => $cantidad,
+                'valor_unitario' => $valorUnitario,
+                'valor_linea' => $valorLinea,
+                'igv_linea' => $igvLinea,
+            ];
+        }
+
+        $sumaValorLineas = round(array_sum(array_column($lineas, 'valor_linea')), 2);
+        $descuento = min(round((float) $venta->descuento, 2), $sumaValorLineas);
+
+        $objetivoSubtotal = round((float) $venta->subtotal, 2);
+        $objetivoTotal = round((float) $venta->total, 2);
+        $toleranciaMax = max(0.05, count($lineas) * 0.01);
+
+        // Alinear suma de valor venta de líneas con el subtotal esperado (solo diferencias por redondeo)
+        $objetivoValorBruto = round($objetivoSubtotal + $descuento, 2);
+        $diffValor = round($objetivoValorBruto - $sumaValorLineas, 2);
+        if (count($lineas) > 0 && abs($diffValor) > 0 && abs($diffValor) <= $toleranciaMax) {
+            $centavos = (int) round(abs($diffValor) * 100);
+            $paso = $diffValor > 0 ? 0.01 : -0.01;
+            for ($c = 0; $c < $centavos; $c++) {
+                $mejorIdx = null;
+                $mejorError = PHP_FLOAT_MAX;
+                foreach ($lineas as $idx => $l) {
+                    if ($l['valor_linea'] + $paso <= 0) {
+                        continue;
+                    }
+                    $valorTeorico = $l['cantidad'] * $l['valor_unitario'];
+                    $error = abs(($l['valor_linea'] + $paso) - $valorTeorico);
+                    if ($error < $mejorError) {
+                        $mejorError = $error;
+                        $mejorIdx = $idx;
+                    }
+                }
+                if ($mejorIdx === null) {
+                    break;
+                }
+                $lineas[$mejorIdx]['valor_linea'] = round($lineas[$mejorIdx]['valor_linea'] + $paso, 2);
+                $cant = $lineas[$mejorIdx]['cantidad'];
+                if ($cant > 0) {
+                    $lineas[$mejorIdx]['valor_unitario'] = round($lineas[$mejorIdx]['valor_linea'] / $cant, 6);
+                }
+                $lineas[$mejorIdx]['igv_linea'] = round($lineas[$mejorIdx]['valor_linea'] * 0.18, 2);
+            }
+            $sumaValorLineas = round(array_sum(array_column($lineas, 'valor_linea')), 2);
+        }
+
+        $descuento = min(round((float) $venta->descuento, 2), $sumaValorLineas);
+        $gravadas = round($sumaValorLineas - $descuento, 2);
+        $sumaIgvLineas = round(array_sum(array_column($lineas, 'igv_linea')), 2);
+        $igvCalculado = $descuento > 0 ? round($gravadas * 0.18, 2) : $sumaIgvLineas;
+        $totalCalculado = round($gravadas + $igvCalculado, 2);
+
+        // Si no hay descuento global y el total difiere por redondeo de IGV por línea, ajustar céntimos en las líneas
+        $diffTotal = round($objetivoTotal - $totalCalculado, 2);
+        if ($descuento <= 0 && count($lineas) > 0 && abs($diffTotal) > 0 && abs($diffTotal) <= $toleranciaMax) {
+            $centavos = (int) round(abs($diffTotal) * 100);
+            $paso = $diffTotal > 0 ? 0.01 : -0.01;
+            for ($c = 0; $c < $centavos; $c++) {
+                $mejorIdx = null;
+                $mejorError = PHP_FLOAT_MAX;
+                foreach ($lineas as $idx => $l) {
+                    if ($l['igv_linea'] + $paso < 0) {
+                        continue;
+                    }
+                    $igvTeorico = $l['valor_linea'] * 0.18;
+                    $error = abs(($l['igv_linea'] + $paso) - $igvTeorico);
+                    if ($error < $mejorError) {
+                        $mejorError = $error;
+                        $mejorIdx = $idx;
+                    }
+                }
+                if ($mejorIdx === null) {
+                    break;
+                }
+                $lineas[$mejorIdx]['igv_linea'] = round($lineas[$mejorIdx]['igv_linea'] + $paso, 2);
+            }
+            $sumaIgvLineas = round(array_sum(array_column($lineas, 'igv_linea')), 2);
+        }
+
+        $igvTotal = $descuento > 0 ? round($gravadas * 0.18, 2) : $sumaIgvLineas;
+        $totalVenta = round($gravadas + $igvTotal, 2);
+
+        $items = [];
+        foreach ($lineas as $l) {
+            $cantidad = $l['cantidad'];
+            $valorLinea = $l['valor_linea'];
+            $igvLinea = $l['igv_linea'];
+
             $items[] = (new SaleDetail())
-                ->setCodProducto($d->id_producto)
+                ->setCodProducto($l['cod_producto'])
                 ->setUnidad('NIU') // Asumir Unidad estándar
-                ->setDescripcion($d->descripcion_completa)
+                ->setDescripcion($l['descripcion'])
                 ->setCantidad($cantidad)
-                ->setMtoValorUnitario(round($valorUnitario, 6))
+                ->setMtoValorUnitario(round($l['valor_unitario'], 6))
                 ->setMtoValorVenta($valorLinea)
                 ->setMtoBaseIgv($valorLinea)
                 ->setPorcentajeIgv(18)
                 ->setIgv($igvLinea)
                 ->setTipAfeIgv('10')
                 ->setTotalImpuestos($igvLinea)
-                ->setMtoPrecioUnitario($cantidad > 0 ? round(($valorLinea + $igvLinea) / $cantidad, 2) : 0);
-
-            $sumaValorLineas += $valorLinea;
-            $sumaIgvLineas += $igvLinea;
+                ->setMtoPrecioUnitario($cantidad > 0 ? round(($valorLinea + $igvLinea) / $cantidad, 6) : 0);
         }
-        $sumaValorLineas = round($sumaValorLineas, 2);
-
-        $descuento = min(round((float) $venta->descuento, 2), $sumaValorLineas);
-        $gravadas = round($sumaValorLineas - $descuento, 2);
-        $igvTotal = $descuento > 0 ? round($gravadas * 0.18, 2) : round($sumaIgvLineas, 2);
-        $totalVenta = round($gravadas + $igvTotal, 2);
 
         $invoice = (new Invoice())
             ->setUblVersion('2.1')

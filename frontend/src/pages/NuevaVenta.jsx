@@ -77,18 +77,25 @@ const NuevaVenta = () => {
     // Si la orden no tiene cliente directo, saca el de su cotización
     const idCliente = orden.id_cliente || orden.cotizacion?.id_cliente;
     const clientFound = clientes.find(c => c.id === idCliente) || orden.cliente || orden.cotizacion?.cliente;
-    
+    const incluyeIgvOrden = (orden.incluye_igv !== undefined && orden.incluye_igv !== null)
+      ? orden.incluye_igv == 1
+      : orden.cotizacion?.incluye_igv == 1;
+    const detallesOrden = (orden.detalles && orden.detalles.length > 0)
+      ? orden.detalles
+      : (orden.cotizacion?.detalles || []);
+
     setFormData(prev => ({
       ...prev,
       id_cliente: idCliente,
-      id_orden_pedido: orden.id
+      id_orden_pedido: orden.id,
+      incluye_igv: Boolean(incluyeIgvOrden)
     }));
 
     if (clientFound) {
       setSearchTerm(`${clientFound.ruc} - ${clientFound.razon_social}`);
     }
 
-    setDetalles(orden.detalles.map(d => ({
+    setDetalles(detallesOrden.map(d => ({
       id_producto: d.id_producto,
       nombre: d.producto?.nombre,
       codigo: d.producto?.codigo,
@@ -167,7 +174,7 @@ const NuevaVenta = () => {
         cantidad: d.cantidad,
         // precio_unitario se guarda sin IGV; si la venta se ingresó con IGV, se muestra con IGV
         precio: v.incluye_igv == 1
-          ? Math.round(parseFloat(d.precio_unitario) * 1.18 * 100) / 100
+          ? Math.round(parseFloat(d.precio_unitario) * 1.18 * 10000) / 10000
           : parseFloat(d.precio_unitario),
         nota: d.descripcion_personalizada || ''
       })));
@@ -234,15 +241,31 @@ const NuevaVenta = () => {
     setCuotas(cuotas.filter((_, i) => i !== index));
   };
 
-  // Cálculos
-  const rawSubtotal = detalles.reduce((acc, d) => acc + (d.cantidad * d.precio), 0);
-  const baseSubtotal = formData.incluye_igv ? rawSubtotal / 1.18 : rawSubtotal;
-  
+  // Cálculos redondeados a 2 decimales para mantener correlación exacta entre subtotal, IGV y total
+  const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+  const rawSubtotal = detalles.reduce((acc, d) => acc + ((Number(d.cantidad) || 0) * (Number(d.precio) || 0)), 0);
   const descAmount = parseFloat(formData.descuento) || 0;
-  const subtotalNeto = Math.max(0, baseSubtotal - descAmount);
-  
-  const igv = subtotalNeto * 0.18;
-  const total = subtotalNeto + igv;
+
+  let subtotalNeto = 0;
+  let igv = 0;
+  let total = 0;
+
+  if (formData.incluye_igv) {
+    if (descAmount > 0) {
+      const baseSubtotal = rawSubtotal / 1.18;
+      subtotalNeto = round2(Math.max(0, baseSubtotal - descAmount));
+      igv = round2(subtotalNeto * 0.18);
+      total = round2(subtotalNeto + igv);
+    } else {
+      total = round2(rawSubtotal);
+      subtotalNeto = round2(total / 1.18);
+      igv = round2(total - subtotalNeto);
+    }
+  } else {
+    subtotalNeto = round2(Math.max(0, rawSubtotal - descAmount));
+    igv = round2(subtotalNeto * 0.18);
+    total = round2(subtotalNeto + igv);
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
