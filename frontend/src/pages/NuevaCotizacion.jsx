@@ -6,6 +6,7 @@ import { Save, Plus, Trash2, ArrowLeft, Receipt, Calendar, User, FileText, Image
 import { Link } from 'react-router-dom';
 
 import { API_URL, SERVER_URL } from '../config';
+import BuscarRucModal from '../components/BuscarRucModal';
 
 const NuevaCotizacion = () => {
   const navigate = useNavigate();
@@ -140,6 +141,34 @@ const NuevaCotizacion = () => {
     setShowDropdown(false);
   };
 
+  const [showRucModal, setShowRucModal] = useState(false);
+
+  const buscarClientePorDoc = (doc) => clientes.find(c => String(c.ruc) === String(doc));
+
+  // Confirmado desde el modal: usa el cliente si ya existe; si no, lo registra y lo selecciona
+  const confirmarRuc = async (datos) => {
+    try {
+      let cliente = buscarClientePorDoc(datos.documento);
+      if (!cliente) {
+        const createRes = await axios.post(`${API_URL}/clientes`, {
+          tipo_documento: datos.tipo,
+          ruc: datos.documento,
+          razon_social: datos.nombre,
+          direccion: datos.direccion,
+          telefono: '',
+          email: ''
+        });
+        cliente = createRes.data;
+        setClientes(prev => [...prev, cliente]);
+      }
+      selectClient(cliente);
+      setShowRucModal(false);
+    } catch (e) {
+      const data = e.response?.data;
+      alert('No se pudo registrar el cliente:\n' + (data?.errors ? Object.values(data.errors).flat().join('\n') : (data?.message || e.message)));
+    }
+  };
+
   const filteredClients = clientes.filter(c =>
     c.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.ruc.includes(searchTerm)
@@ -215,6 +244,13 @@ const NuevaCotizacion = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <BuscarRucModal
+        open={showRucModal}
+        onClose={() => setShowRucModal(false)}
+        onConfirm={confirmarRuc}
+        existente={buscarClientePorDoc}
+        confirmLabel="Agregar y seleccionar"
+      />
       <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <Link to="/cotizaciones" className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-800 rounded-full transition-colors">
           <ArrowLeft size={24} />
@@ -237,6 +273,9 @@ const NuevaCotizacion = () => {
             <div className="relative" ref={dropdownRef}>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <User size={16} className="text-gray-400" /> Cliente
+                <button type="button" onClick={() => setShowRucModal(true)} className="ml-auto text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
+                  + Buscar RUC
+                </button>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

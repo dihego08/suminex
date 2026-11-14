@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Plus, Edit, Trash2, Truck, Phone, Mail, MapPin, X, FileText } from 'lucide-react';
 import { SERVER_URL } from '../config';
+import BotonConsultaRuc from '../components/BotonConsultaRuc';
 
 const FORM_VACIO = {
   razon_social: '',
@@ -315,15 +316,21 @@ const Proveedores = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">RUC *</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={20}
-                    value={formData.ruc}
-                    onChange={(e) => setFormData({ ...formData, ruc: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
-                    placeholder="Ej. 20601234567"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      maxLength={20}
+                      value={formData.ruc}
+                      onChange={(e) => setFormData({ ...formData, ruc: e.target.value.trim() })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                      placeholder="Ej. 20601234567"
+                    />
+                    <BotonConsultaRuc
+                      valor={formData.ruc}
+                      onFound={(d) => setFormData(prev => ({ ...prev, ruc: d.documento, razon_social: d.nombre, direccion: d.direccion || prev.direccion }))}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Teléfono</label>

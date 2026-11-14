@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Edit, Trash2, Search, User, X, Phone, Smartphone, Mail } from 'lucide-react';
 
 import { API_URL } from '../config';
+import BotonConsultaRuc from '../components/BotonConsultaRuc';
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -220,7 +221,14 @@ const Clientes = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">RUC *</label>
-                  <input type="text" required value={formData.ruc} onChange={(e) => setFormData({ ...formData, ruc: e.target.value })} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <div className="flex gap-2">
+                    <input type="text" required value={formData.ruc} onChange={(e) => setFormData({ ...formData, ruc: e.target.value.trim() })} placeholder="RUC (11 dígitos) o DNI (8 dígitos)" className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <BotonConsultaRuc
+                      valor={formData.ruc}
+                      onFound={(d) => setFormData(prev => ({ ...prev, ruc: d.documento, razon_social: d.nombre, direccion: d.direccion || prev.direccion }))}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Use "Buscar" para completar razón social y dirección automáticamente.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>

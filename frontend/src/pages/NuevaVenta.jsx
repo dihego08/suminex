@@ -5,6 +5,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search, Package, User, Calendar, Receipt, FileText } from 'lucide-react';
 
 import { API_URL, SERVER_URL } from '../config';
+import BuscarRucModal from '../components/BuscarRucModal';
 
 const NuevaVenta = () => {
   const navigate = useNavigate();
@@ -108,32 +109,31 @@ const NuevaVenta = () => {
     setShowOrdenDropdown(false);
   };
 
-  const buscarRuc = async () => {
-    const ruc = prompt("Ingrese el RUC a buscar:");
-    if (!ruc || ruc.length < 8) return;
+  const [showRucModal, setShowRucModal] = useState(false);
+
+  const buscarClientePorDoc = (doc) => clientes.find(c => String(c.ruc) === String(doc));
+
+  // Confirmado desde el modal: usa el cliente si ya existe; si no, lo registra y lo selecciona
+  const confirmarRuc = async (datos) => {
     try {
-      const res = await axios.get(`https://dbusinessaqp.com/api_ruc/api.php?ruc=${ruc}`);
-      if (res.data && res.data.nombre) {
-        // Crear cliente
-        const payload = {
-          tipo_documento: ruc.length === 11 ? 'RUC' : 'DNI',
-          ruc: ruc,
-          razon_social: res.data.nombre,
-          direccion: res.data.direccion || '',
+      let cliente = buscarClientePorDoc(datos.documento);
+      if (!cliente) {
+        const createRes = await axios.post(`${API_URL}/clientes`, {
+          tipo_documento: datos.tipo,
+          ruc: datos.documento,
+          razon_social: datos.nombre,
+          direccion: datos.direccion,
           telefono: '',
           email: ''
-        };
-        const createRes = await axios.post(`${API_URL}/clientes`, payload);
-        const newClient = createRes.data;
-        setClientes([...clientes, newClient]);
-        selectClient(newClient);
-        alert(`Cliente ${newClient.razon_social} agregado y seleccionado.`);
-      } else {
-        alert("RUC no encontrado o error en la API externa.");
+        });
+        cliente = createRes.data;
+        setClientes(prev => [...prev, cliente]);
       }
+      selectClient(cliente);
+      setShowRucModal(false);
     } catch (e) {
-      alert("Error al consultar el RUC.");
-      console.error(e);
+      const data = e.response?.data;
+      alert('No se pudo registrar el cliente:\n' + (data?.errors ? Object.values(data.errors).flat().join('\n') : (data?.message || e.message)));
     }
   };
 
@@ -326,6 +326,13 @@ const NuevaVenta = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <BuscarRucModal
+        open={showRucModal}
+        onClose={() => setShowRucModal(false)}
+        onConfirm={confirmarRuc}
+        existente={buscarClientePorDoc}
+        confirmLabel="Agregar y seleccionar"
+      />
       <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
         <Link to="/ventas" className="p-2 hover:bg-gray-100 text-gray-500 hover:text-gray-800 rounded-full transition-colors">
           <ArrowLeft size={24} />
@@ -395,7 +402,7 @@ const NuevaVenta = () => {
             <div className="relative col-span-2" ref={dropdownRef}>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <User size={16} className="text-gray-400" /> Cliente
-                <button type="button" onClick={buscarRuc} className="ml-auto text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
+                <button type="button" onClick={() => setShowRucModal(true)} className="ml-auto text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                   + Buscar RUC
                 </button>
               </label>

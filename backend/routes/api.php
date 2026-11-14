@@ -80,6 +80,7 @@ Route::get('/', function () {
     Route::delete('ordenes/{id}/orden-compra', [OrdenPedidoController::class, 'quitarOrdenCompra']);
 
     // Rutas para Ventas y Facturación Electrónica (Greenter)
+    Route::get('dashboard/ventas-por-mes', [\App\Http\Controllers\DashboardController::class, 'ventasPorMes']);
     Route::get('ventas', [VentaController::class, 'index']);
     Route::get('ventas/{id}', [VentaController::class, 'show']);
     Route::get('ventas/correlativo/{serie}', [VentaController::class, 'proximoCorrelativo']);
