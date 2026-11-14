@@ -14,8 +14,9 @@ class GuiaPdfController extends Controller
     {
         $guia = DB::table('guia_cabecera as g')
             ->leftJoin('motivos_traslado as m', 'm.codigo', '=', 'g.motivo_traslado')
+            ->leftJoin('ventas as v', 'v.id', '=', 'g.id_venta')
             ->where('g.id', $id)
-            ->select('g.*', 'm.motivo_traslado as desc_motivo_traslado')
+            ->select('g.*', 'v.serie as venta_serie', 'v.correlativo as venta_correlativo', 'm.motivo_traslado as desc_motivo_traslado')
             ->first();
 
         if (!$guia) {
@@ -38,6 +39,9 @@ class GuiaPdfController extends Controller
 
         $esPublico = $guia->modalidad_trasnporte == '01' || $guia->modalidad_trasnporte == 1;
         $modalidad = $esPublico ? 'Transporte público' : 'Transporte privado';
+
+
+
         $descMotivo = ($guia->motivo_traslado == 13) ? 'OTROS ' . $guia->descripcion_motivo : $guia->desc_motivo_traslado;
         $motivo = str_pad((string) $guia->motivo_traslado, 2, '0', STR_PAD_LEFT) . ($descMotivo ? ' – ' . $descMotivo : '');
         $pesoTotal = (empty($guia->total_bruto) || $guia->total_bruto == 0) ? $guia->total_neto : $guia->total_bruto;
@@ -75,7 +79,9 @@ class GuiaPdfController extends Controller
             . '<table>'
             . '<tr>' . $fila('Fecha de emisión:', H::fecha($guia->fecha_emision)) . $fila('Inicio de traslado:', H::fecha($guia->fecha_traslado), '18%', '32%') . '</tr>'
             . '<tr>' . $fila('Motivo de traslado:', e($motivo)) . $fila('Modalidad:', $modalidad) . '</tr>'
-            . '<tr>' . $fila('Peso bruto total:', number_format((float) $pesoTotal, 3) . ' KGM') . '<td></td><td></td></tr>'
+
+            . '<tr>' . $fila('Peso bruto total:', number_format((float) $pesoTotal, 3) . ' KGM') . $fila('Documento:', ($guia->venta_serie ?? $guia->venta_serie) . "-" . ($guia->venta_correlativo ?? $guia->venta_correlativo)) . '<td></td><td></td></tr>'
+
             . '</table>'
             . '</div>'
 

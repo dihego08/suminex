@@ -144,9 +144,9 @@ const MOTIVOS = [
 ];
 
 const INIT = {
-  num_guia: '', fecha_emision: today, fecha_traslado: today,
+  num_guia: '', id_venta: null, fecha_emision: today, fecha_traslado: today,
   motivo_traslado: '01', descripcion_motivo: '',
-  origen: 'CAL.BELEN MZA. B LOTE. 8 JERUSALEN - MARIANO MELGAR - AREQUIPA - AREQUIPA',
+  origen: 'JR. MANTARO NRO 100 SEMI RURAL PACHACUTEC ZON  - CERRO COLORADO - AREQUIPA - AREQUIPA',
   ruc_destinatario: '', destino: '',
   ubigeo_origen: { departamento: '', provincia: '', distrito: '' },
   ubigeo_destino: { departamento: '', provincia: '', distrito: '' },
@@ -192,7 +192,7 @@ export default function NewGuiaView() {
 
 
   useEffect(() => {
-    axios.get(`${SERVER_URL}/api/codigos-sunat`).then(r => setUnidadesSunat(r.data)).catch(() => {});
+    axios.get(`${SERVER_URL}/api/codigos-sunat`).then(r => setUnidadesSunat(r.data)).catch(() => { });
     axios.get(`${SERVER_URL}/api/guias/next-num`).then(r => setHead(h => ({ ...h, num_guia: r.data.num_guia }))).catch(() => { });
   }, []);
 
@@ -213,7 +213,10 @@ export default function NewGuiaView() {
     try {
       const r = await axios.get(`${SERVER_URL}/api/ventas/${venta.id}`);
       const v = r.data;
-      
+
+      // Guarda la venta de origen para registrar la relación guía -> venta al guardar
+      set('id_venta', v.id ?? venta.id);
+
       let dest = '';
       if (v.cliente) {
         set('ruc_destinatario', v.cliente.ruc || v.cliente.dni || '');
@@ -238,7 +241,7 @@ export default function NewGuiaView() {
         });
         setItems(newItems);
       }
-      
+
       setVentasResults([]);
       setSearchVenta('');
       alert('Venta importada correctamente.');

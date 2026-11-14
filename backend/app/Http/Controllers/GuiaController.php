@@ -12,7 +12,8 @@ class GuiaController extends Controller
     {
         $query = DB::table('guia_cabecera as g')
             ->leftJoin('person as p', 'p.no', '=', 'g.ruc_destinatario')
-            ->select('g.*', 'p.name')
+            ->leftJoin('ventas as v', 'v.id', '=', 'g.id_venta')
+            ->select('g.*', 'p.name', 'v.serie as venta_serie', 'v.correlativo as venta_correlativo')
             ->orderBy('g.id', 'DESC');
 
         if ($request->filled('search')) {
@@ -131,6 +132,7 @@ class GuiaController extends Controller
 
             // Insert cabecera
             $guiaId = DB::table('guia_cabecera')->insertGetId([
+                'id_venta'             => $request->filled('id_venta') ? (int) $request->id_venta : null,
                 'num_guia'             => $request->num_guia,
                 'fecha_emision'        => $request->fecha_emision,
                 'fecha_traslado'       => $request->fecha_traslado,

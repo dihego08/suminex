@@ -203,6 +203,7 @@ export default function GuiasView() {
             <tr>
               <th className="px-4 py-4 font-bold">#</th>
               <th className="px-4 py-4 font-bold">Num. Guía</th>
+              <th className="px-4 py-4 font-bold">Venta</th>
               <th className="px-4 py-4 font-bold">F. Emisión</th>
               <th className="px-4 py-4 font-bold">F. Traslado</th>
               <th className="px-4 py-4 font-bold">Origen</th>
@@ -221,14 +222,14 @@ export default function GuiasView() {
           <tbody className="divide-y divide-gray-100">
             {loading && (
               <tr>
-                <td colSpan="15" className="px-6 py-10 text-center text-gray-400">
+                <td colSpan="16" className="px-6 py-10 text-center text-gray-400">
                   Cargando guías...
                 </td>
               </tr>
             )}
             {!loading && listGuias.length === 0 && (
               <tr>
-                <td colSpan="15" className="px-6 py-10 text-center text-gray-400">
+                <td colSpan="16" className="px-6 py-10 text-center text-gray-400">
                   No se encontraron guías de remisión.
                 </td>
               </tr>
@@ -237,6 +238,9 @@ export default function GuiasView() {
               <tr key={g.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 text-gray-400 text-xs">{idx + 1}</td>
                 <td className="px-4 py-3 font-mono font-bold text-blue-700 text-xs">{g.num_guia}</td>
+                <td className="px-4 py-3 font-mono text-gray-700 text-xs">
+                  {g.venta_serie ? `${g.venta_serie}-${String(g.venta_correlativo).padStart(6, '0')}` : '—'}
+                </td>
                 <td className="px-4 py-3 text-gray-600 text-xs">{g.fecha_emision}</td>
                 <td className="px-4 py-3 text-gray-600 text-xs">{g.fecha_traslado}</td>
                 <td className="px-4 py-3 text-gray-700 text-xs max-w-[120px] truncate">{g.origen}</td>
